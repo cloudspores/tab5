@@ -79,6 +79,13 @@ static void update_task(void *arg)
 static void register_console()
 {
     console::add("home",  [](const char *, int) { launcher::home(); }, "launcher home screen");
+    console::add("wifi",  [](const char *a, int) {
+        char ssid[33] = ""; const char *sp = strchr(a, ' ');
+        if (!sp) { ESP_LOGW(TAG, "usage: wifi SSID PASSWORD"); return; }
+        strlcpy(ssid, a, sp - a + 1 < (int)sizeof ssid ? sp - a + 1 : sizeof ssid);
+        net::set_credentials(ssid, sp + 1);
+    }, "wifi SSID PASSWORD (stored in NVS)");
+    console::add("bridge", [](const char *a, int) { if (*a) bridge::set_host(a); else ESP_LOGW(TAG, "usage: bridge NAME.local|IP"); }, "bridge HOST (stored in NVS)");
     console::add("open",  [](const char *a, int) { launcher::open(*a ? a : "radio"); }, "open APP (radio, settings)");
     console::add("check",   [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, nullptr, 4, nullptr, 0); }, "check the GitHub catalogue for a newer firmware");
     console::add("install", [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, (void *)1, 4, nullptr, 0); }, "install the catalogue firmware if newer (restarts)");

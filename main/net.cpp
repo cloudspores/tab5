@@ -6,6 +6,7 @@
 #include "c6_update.h"
 #include "topbar.h"
 #include "secrets.h"
+#include "settings.h"
 
 #include <cstring>
 #include <cstdio>
@@ -75,9 +76,20 @@ void start()
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &on_event, nullptr));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_event, nullptr));
 
+    // Credentials live in NVS so firmware installed over the air (built without secrets.h) keeps
+    // working. A locally built image seeds them from secrets.h on first boot; the console can change them.
+    char ssid[33] = "", pass[65] = "";
+    if (!settings::get_str("wifi_ssid", ssid, sizeof ssid) || !ssid[0]) {
+        strlcpy(ssid, WIFI_SSID, sizeof ssid);
+        strlcpy(pass, WIFI_PASS, sizeof pass);
+        if (ssid[0]) { settings::set_str("wifi_ssid", ssid); settings::set_str("wifi_pass", pass); ESP_LOGI(TAG, "seeded WiFi credentials from build"); }
+    } else {
+        settings::get_str("wifi_pass", pass, sizeof pass);
+    }
+    if (!ssid[0]) ESP_LOGE(TAG, "no WiFi credentials: use the console: wifi SSID PASSWORD");
     wifi_config_t wc = {};
-    strncpy((char *)wc.sta.ssid, WIFI_SSID, sizeof wc.sta.ssid - 1);
-    strncpy((char *)wc.sta.password, WIFI_PASS, sizeof wc.sta.password - 1);
+    strlcpy((char *)wc.sta.ssid, ssid, sizeof wc.sta.ssid);
+    strlcpy((char *)wc.sta.password, pass, sizeof wc.sta.password);
     wc.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wc));
@@ -88,6 +100,20 @@ void start()
     esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
     esp_sntp_setservername(0, "pool.ntp.org");
     esp_sntp_init();
+}
+
+void set_credentials(const char *ssid, const char *pass)
+{
+    settings::set_str("wifi_ssid", ssid);
+    settings::set_str("wifi_pass", pass);
+    wifi_config_t wc = {};
+    strlcpy((char *)wc.sta.ssid, ssid, sizeof wc.sta.ssid);
+    strlcpy((char *)wc.sta.password, pass, sizeof wc.sta.password);
+    wc.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+    esp_wifi_disconnect();
+    esp_wifi_set_config(WIFI_IF_STA, &wc);
+    esp_wifi_connect();
+    ESP_LOGI(TAG, "WiFi credentials updated for %s", ssid);
 }
 
 void wait_connected() { xEventGroupWaitBits(events, CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY); }

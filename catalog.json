@@ -3,9 +3,9 @@
   "device": "m5stack-tab5",
   "firmware": {
     "name": "Tab5 Radio",
-    "version": "0.2.1",
-    "url": "https://github.com/cloudspores/tab5/releases/download/v0.2.1/tab5_radio.bin",
-    "notes": "Launcher, settings, OTA updates, Sonos by mDNS."
+    "version": "0.2.2",
+    "url": "https://github.com/cloudspores/tab5/releases/download/v0.2.2/tab5_radio.bin",
+    "notes": "WiFi and bridge settings in NVS; over-the-air update test."
   },
   "packs": []
 }

@@ -6,6 +6,7 @@
 #include "esp_timer.h"
 #include "cJSON.h"
 #include "secrets.h"
+#include "settings.h"
 #include "mdns.h"
 #include "esp_netif_ip_addr.h"
 
@@ -17,11 +18,23 @@ namespace {
  * The bridge runs on a laptop whose DHCP address changes; BRIDGE_HOST is normally its Bonjour name
  * ("name.local"). Resolve it with mDNS and cache the answer; a plain IP or hostname passes through.
  */
+const char *configured_host()
+{
+    static char h[80] = "";
+    if (!h[0]) {
+        if (!settings::get_str("bridge", h, sizeof h) || !h[0]) {
+            strlcpy(h, BRIDGE_HOST, sizeof h);
+            if (h[0]) settings::set_str("bridge", h);
+        }
+    }
+    return h;
+}
+
 const char *host()
 {
     static char cached[40] = "";
     static int64_t resolved_at = 0;
-    const char *h = BRIDGE_HOST;
+    const char *h = configured_host();
     size_t n = strlen(h);
     if (n < 7 || strcmp(h + n - 6, ".local") != 0) return h;
     int64_t now = esp_timer_get_time();
@@ -85,6 +98,8 @@ void json_escape(const char *in, char *out, size_t cap)
 } // namespace
 
 namespace bridge {
+
+void set_host(const char *h) { settings::set_str("bridge", h); ESP_LOGI(TAG, "bridge host set to %s (takes effect after restart)", h); }
 
 bool reachable()
 {

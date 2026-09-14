@@ -12,6 +12,9 @@ namespace net {
 /** Power the C6, bring up the hosted link, update its firmware if needed, and start WiFi. */
 void start();
 
+/** Store new credentials in NVS and reconnect with them. */
+void set_credentials(const char *ssid, const char *pass);
+
 /** Block until the station has an IP address. */
 void wait_connected();
 
