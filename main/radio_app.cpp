@@ -20,6 +20,7 @@
 #include "topbar.h"
 #include "launcher.h"
 #include "theme.h"
+#include "net.h"
 
 #include <cstring>
 #include <cstdio>
@@ -54,7 +55,7 @@ int brightness = 50;
 
 // ------------------------------------------------------------------ command queue
 
-enum CmdType { CMD_KEY, CMD_TUNE, CMD_PRESET, CMD_SEARCH, CMD_RESULT, CMD_OUTPUT, CMD_VOLUME, CMD_LIGHT, CMD_DISCOVER };
+enum CmdType { CMD_KEY, CMD_TUNE, CMD_PRESET, CMD_SEARCH, CMD_RESULT, CMD_OUTPUT, CMD_VOLUME, CMD_LIGHT, CMD_DISCOVER, CMD_RESUME };
 struct Cmd { CmdType type; int a; int b; char text[64]; };
 QueueHandle_t cmds;
 
@@ -104,6 +105,7 @@ void play(const Station &s)
 {
     current = s;
     stations::save_last(s);
+    if (!net::connected()) { ui::set_station(s.name); ui::set_status("NO WIFI"); return; }   // radio::start() plays once online
     user_paused = false;
     ui::set_station(s.name);
     ui::set_title("");
@@ -203,7 +205,14 @@ void discover_outputs()
     for (size_t i = 0; i < outputs.size(); i++) if (outputs[i] == saved) output_idx = i;
     ui::set_output(outputs[output_idx].c_str());
     ESP_LOGI(TAG, "%d outputs, using %s", (int)outputs.size(), outputs[output_idx].c_str());
-    play(current);
+    // Only start playing if the radio is the app on screen: another audio app may own the codec.
+    if (!strcmp(launcher::current(), "radio")) play(current);   // otherwise on_enter resumes later
+}
+
+/** Entering the radio screen: pick up where we left off unless the user paused deliberately. */
+void resume_if_idle()
+{
+    if (current.name[0] && net::connected() && !stream::playing() && !output_is_sonos() && !user_paused) play(current);
 }
 
 // ------------------------------------------------------------------ UI callbacks (LVGL task)
@@ -291,6 +300,7 @@ void control_task(void *)
         case CMD_VOLUME:   set_volume(c.a); break;
         case CMD_LIGHT:    apply_brightness(c.a); break;
         case CMD_DISCOVER: discover_outputs(); break;
+        case CMD_RESUME:   resume_if_idle(); break;
         }
     }
 }
@@ -330,7 +340,11 @@ const char *app_status() { return stream::playing() ? "PLAYING" : (output_is_son
 
 } // namespace
 
-const App radio_app = { "radio", "radio", "Internet radio, presets, Sonos output", LV_SYMBOL_AUDIO, ui::init, nullptr, nullptr, app_status };
+namespace {
+void on_enter() { post(CMD_RESUME); }
+}
+
+const App radio_app = { "radio", "radio", "Internet radio, presets, Sonos output", LV_SYMBOL_AUDIO, ui::init, on_enter, nullptr, app_status };
 
 namespace radio {
 

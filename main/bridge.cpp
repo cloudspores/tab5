@@ -99,6 +99,9 @@ void json_escape(const char *in, char *out, size_t cap)
 
 namespace bridge {
 
+const char *resolved_host() { return host(); }
+int port() { return BRIDGE_PORT; }
+
 void set_host(const char *h) { settings::set_str("bridge", h); ESP_LOGI(TAG, "bridge host set to %s (takes effect after restart)", h); }
 
 bool reachable()

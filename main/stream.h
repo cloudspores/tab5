@@ -12,5 +12,8 @@ void stop();
 bool playing();
 void set_mute(bool on);
 void set_volume(int percent);   // 0..100
+int  volume_percent();
+/** The speaker codec handle, for apps that play their own audio while the radio is stopped. */
+void *speaker();
 bool muted();
 }

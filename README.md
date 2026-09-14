@@ -25,6 +25,16 @@ tapping the product name in any top bar returns home. Apps implement the small `
 `main/app.h` (a screen, enter/exit hooks, a status line for the card). The radio keeps playing while
 you are on another screen.
 
+## Translate app
+
+Live Spanish/English interpreter for a table conversation. The Tab5 streams its microphones
+(16 kHz) to the bridge's `/translate/live` WebSocket; the bridge cuts phrases at pauses, transcribes
+with language detection, translates toward the other language on a fast resident model, synthesizes
+the reply, and sends text events plus 16 kHz PCM back. The screen shows everything in Spanish on the
+top panel (FLIP turns it toward the person opposite) and everything in English on the bottom; VOICE
+toggles spoken replies. The microphone is muted while a reply plays. Measured on the bench: about
+0.7 s from the end of a phrase to the translation. Console: `open translate`, `listen on|off`, `flip`.
+
 ## Updates
 
 Settings → FIRMWARE → CHECK reads `catalog.json` from this repository and offers INSTALL when it
@@ -72,6 +82,7 @@ step is compiled out, which is fine on a board whose C6 is already updated).
 | `main/stations.*` | built-in list, Radio Browser search, presets in NVS |
 | `main/bridge.*` | client for the Mac bridge (Sonos rooms, handoff, volume, state) |
 | `main/settings_app.*`, `update.*` | settings screen; firmware update from the GitHub catalogue |
+| `main/translate_app.*` | live translation: microphone streaming, bridge events, spoken replies |
 | `main/c6_update.*` | one-time OTA of the C6 co-processor firmware over the hosted link |
 | `main/fonts/` | Familjen Grotesk and JetBrains Mono converted for LVGL (OFL) |
 | `main/secrets.h` | WiFi credentials and bridge address (gitignored; copy from `secrets.h.example`) |

@@ -6,3 +6,4 @@ dependencies:
   espressif/esp_audio_codec: "~2.5"
   espressif/cjson: "^1.7"
   espressif/mdns: "^1.8"
+  espressif/esp_websocket_client: "^1.8"

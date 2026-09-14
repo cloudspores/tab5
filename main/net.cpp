@@ -26,9 +26,16 @@ static const char *TAG = "net";
 
 namespace {
 
-EventGroupHandle_t events;
+EventGroupHandle_t events = nullptr;
 constexpr int CONNECTED_BIT = BIT0;
 char ip_text[24] = "";
+
+/** The event group may be awaited by apps before start() runs (boot opens the last-used app first). */
+EventGroupHandle_t ev()
+{
+    if (!events) events = xEventGroupCreate();
+    return events;
+}
 
 /** WiFi/IP event handler: connect on start, reconnect after a pause on loss, record the IP. */
 void on_event(void *, esp_event_base_t base, int32_t id, void *data)
@@ -36,7 +43,7 @@ void on_event(void *, esp_event_base_t base, int32_t id, void *data)
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        xEventGroupClearBits(events, CONNECTED_BIT);
+        xEventGroupClearBits(ev(), CONNECTED_BIT);
         ip_text[0] = 0;
         topbar::set_wifi("WIFI RETRY");
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -46,7 +53,7 @@ void on_event(void *, esp_event_base_t base, int32_t id, void *data)
         snprintf(ip_text, sizeof ip_text, IPSTR, IP2STR(&e->ip_info.ip));
         ESP_LOGI(TAG, "got ip %s", ip_text);
         topbar::set_wifi("WIFI OK");
-        xEventGroupSetBits(events, CONNECTED_BIT);
+        xEventGroupSetBits(ev(), CONNECTED_BIT);
     }
 }
 
@@ -65,7 +72,7 @@ void start()
     if (esp_hosted_connect_to_slave() != 0) ESP_LOGE(TAG, "esp_hosted_connect_to_slave failed");
     c6::update_if_needed();   // one-time: replaces legacy C6 firmware, restarts the host if it does
 
-    events = xEventGroupCreate();
+    ev();
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
@@ -116,8 +123,8 @@ void set_credentials(const char *ssid, const char *pass)
     ESP_LOGI(TAG, "WiFi credentials updated for %s", ssid);
 }
 
-void wait_connected() { xEventGroupWaitBits(events, CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY); }
-bool connected() { return (xEventGroupGetBits(events) & CONNECTED_BIT) != 0; }
+void wait_connected() { xEventGroupWaitBits(ev(), CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY); }
+bool connected() { return (xEventGroupGetBits(ev()) & CONNECTED_BIT) != 0; }
 const char *ip() { return ip_text; }
 
 }

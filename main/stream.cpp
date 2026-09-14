@@ -322,6 +322,9 @@ void set_mute(bool on)
 
 bool muted() { return is_muted; }
 
+int volume_percent() { return volume; }
+void *speaker() { return spk; }
+
 void set_volume(int percent)
 {
     volume = percent < 0 ? 0 : percent > 100 ? 100 : percent;

@@ -16,6 +16,7 @@ cloud account.
 | `POST /translate {text,from,to}` | translation tuned for Costa Rican Spanish |
 | `POST /transcribe?language=en|es|auto` (body: raw 16 kHz mono 16-bit PCM) | speech to text via whisper.cpp on the GPU |
 | `POST /speak {text,language}` | text to speech via Piper; returns `audio/wav` (22.05 kHz mono) |
+| `WS /translate/live` | live interpreter session: PCM in, phrase/translation events and PCM out (protocol in `Live.scala`) |
 
 The Sonos routes keep the Python bridge's contract, so the Tab5 firmware and the knobs are unchanged.
 
@@ -30,6 +31,10 @@ The Sonos routes keep the Python bridge's contract, so the Tab5 firmware and the
 | `Soap.scala` | UPnP SOAP envelopes, response parsing, radio metadata |
 | `Ollama.scala` | Ollama `/api/chat` client |
 | `Speech.scala` | whisper.cpp server client (multipart, content-length), Piper process runner, WAV header |
+| `Vad.scala` | energy-based voice-activity segmentation with adaptive noise floor and pre-roll |
+| `Live.scala` | live translation session: segmentation, partials, transcribe, translate, speak, events |
+| `Audio.scala` | WAV parsing, resampling, mono downmix, RMS |
+| `tools/LiveClient.scala` | test client: streams WAVs to a live session and prints events |
 
 ## Develop
 
@@ -54,7 +59,13 @@ and compose file, and restarts the container. The Tab5 finds it as `spark-4dfb.l
 - **Piper** (`~/speech/piper`, the aarch64 release) with voices `en_US-lessac-medium` and
   `es_MX-claude-high`, mounted read-only into the bridge container at `/opt/piper`.
 
+## Live translation
+
+`java -cp target/scala-3.7.4/tab5-bridge.jar tab5.bridge.tools.LiveClient ws://spark-4dfb.local:8765/translate/live a.wav b.wav`
+streams recorded lines as a conversation. The translator model (`translator.model`, default
+`qwen3.6:35b-a3b`) is loaded on first use and kept resident (`keep_alive -1`); a disconnect during
+that first load cancels it, so warm it with one `/translate` call after a restart of Ollama.
+
 ## Next
 
-Spotify profile pull, a vision endpoint for the Tab5's camera, and the Tab5 firmware side of
-translation (push-to-talk, transcript, spoken reply).
+Spotify profile pull and a vision endpoint for the Tab5's camera.

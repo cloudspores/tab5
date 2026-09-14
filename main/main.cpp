@@ -25,6 +25,7 @@
 #include "update.h"
 #include "radio_app.h"
 #include "settings_app.h"
+#include "translate_app.h"
 
 static const char *TAG = "main";
 
@@ -107,6 +108,7 @@ extern "C" void app_main(void)
     start_display();
 
     launcher::add(&radio_app);
+    launcher::add(&translate_app);
     launcher::add(&synth_app_placeholder);
     launcher::add(&settings_app);
     launcher::init();
@@ -114,6 +116,7 @@ extern "C" void app_main(void)
     radio::init();
     console::start();
     register_console();
+    translate::register_console();
 
     // Show the last-used screen before the network is up so the device feels instant.
     char last_app[16] = "radio";
