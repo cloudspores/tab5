@@ -14,6 +14,8 @@ cloud account.
 | `POST /sonos/volume {room,volume}` | set volume 0-100 |
 | `POST /ask {question,system?}` | chat with the model on the Spark |
 | `POST /translate {text,from,to}` | translation tuned for Costa Rican Spanish |
+| `POST /transcribe?language=en|es|auto` (body: raw 16 kHz mono 16-bit PCM) | speech to text via whisper.cpp on the GPU |
+| `POST /speak {text,language}` | text to speech via Piper; returns `audio/wav` (22.05 kHz mono) |
 
 The Sonos routes keep the Python bridge's contract, so the Tab5 firmware and the knobs are unchanged.
 
@@ -27,6 +29,7 @@ The Sonos routes keep the Python bridge's contract, so the Tab5 firmware and the
 | `Sonos.scala` | SSDP discovery with subnet-scan fallback, household topology, AVTransport / RenderingControl actions |
 | `Soap.scala` | UPnP SOAP envelopes, response parsing, radio metadata |
 | `Ollama.scala` | Ollama `/api/chat` client |
+| `Speech.scala` | whisper.cpp server client (multipart, content-length), Piper process runner, WAV header |
 
 ## Develop
 
@@ -42,7 +45,16 @@ The Spark has Docker and Java 8 only, so the bridge runs in a Temurin 21 contain
 networking (SSDP multicast needs it). `./deploy.sh` builds the JAR, copies it with the Dockerfile
 and compose file, and restarts the container. The Tab5 finds it as `spark-4dfb.local`.
 
+## Speech services on the Spark
+
+- **whisper.cpp** built with CUDA in `~/speech/whisper.cpp` (`cmake -B build -DGGML_CUDA=1`, target
+  `whisper-server`), model `ggml-large-v3-turbo.bin`. Runs as the systemd user unit in
+  `whisper-server.service` on 127.0.0.1:8178; `loginctl enable-linger` keeps it up without a login.
+  Transcribes a five-second clip in about 0.3 s.
+- **Piper** (`~/speech/piper`, the aarch64 release) with voices `en_US-lessac-medium` and
+  `es_MX-claude-high`, mounted read-only into the bridge container at `/opt/piper`.
+
 ## Next
 
-Speech-to-text and text-to-speech endpoints backed by containers on the Spark (Whisper, a TTS
-server), the Spotify profile pull, and a vision endpoint for the Tab5's camera.
+Spotify profile pull, a vision endpoint for the Tab5's camera, and the Tab5 firmware side of
+translation (push-to-talk, transcript, spoken reply).

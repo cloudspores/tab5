@@ -50,9 +50,15 @@ private final case class SpeechLive(cfg: SpeechConfig, client: Client) extends S
       FormField.simpleField("language", if language == "auto" then "auto" else language),
       FormField.simpleField("temperature", "0.0")
     )
-    val req = Request.post(URL.decode(s"${cfg.whisperUrl}/inference").toOption.get, Body.fromMultipartForm(form, Boundary("tab5speech")))
+    // whisper.cpp's server (cpp-httplib) rejects chunked uploads, so the form is serialized up front
+    // and sent with a Content-Length.
+    val boundary = Boundary("tab5speech")
     for
-      resp <- client.batched(req).timeoutFail(new java.io.IOException("whisper timed out"))(60.seconds)
+      bytes <- form.multipartBytes(boundary).runCollect
+      req    = Request
+                 .post(URL.decode(s"${cfg.whisperUrl}/inference").toOption.get, Body.fromChunk(bytes))
+                 .addHeader(Header.ContentType(MediaType.multipart.`form-data`, boundary = Some(boundary)))
+      resp  <- client.batched(req).timeoutFail(new java.io.IOException("whisper timed out"))(60.seconds)
       text <- resp.body.asString
       _    <- ZIO.fail(new java.io.IOException(s"whisper HTTP ${resp.status.code}: ${text.take(200)}")).when(!resp.status.isSuccess)
       out  <- ZIO.fromEither(text.fromJson[WhisperResponse]).mapError(e => new java.io.IOException(s"whisper response: $e"))
