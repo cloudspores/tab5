@@ -18,14 +18,28 @@ https://claude.ai/code/artifact/8ea29e09-ca1e-427d-acb4-8b179b471b47
   room volume.
 - Last station, volume, mute, output and presets persist in NVS.
 
+## Launcher and apps
+
+The firmware boots into the last-used screen. The home screen lists the apps as numbered cards;
+tapping the product name in any top bar returns home. Apps implement the small `App` interface in
+`main/app.h` (a screen, enter/exit hooks, a status line for the card). The radio keeps playing while
+you are on another screen.
+
+## Updates
+
+Settings → FIRMWARE → CHECK reads `catalog.json` from this repository and offers INSTALL when it
+lists a newer version. The image is downloaded from the GitHub Release named in the catalogue and
+written to the spare OTA slot; the device restarts into it. To publish a release: bump `version.txt`,
+update `catalog.json`, commit, and push a `vX.Y.Z` tag. CI builds and attaches the binaries.
+
+WiFi credentials and the bridge host live in NVS (seeded from `secrets.h` by a local build, or set
+with the `wifi` and `bridge` console verbs), so images built by CI without secrets keep working.
+
 ## Serial console
 
-Lines typed on the USB serial console (115200) drive the same commands as the touch UI, handy for
-testing without touching the screen:
-
-```
-status | next | tune N | preset N | store N | out N | vol N | mute | search TEXT | cr | home | result N
-```
+Type `help` on the USB serial console (115200). Verbs: `status next tune preset store out vol mute
+play bright search cr home result off` for the radio; `home open check install wifi bridge` for the
+system.
 
 ## Bridge endpoints used
 
