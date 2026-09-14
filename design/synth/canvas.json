@@ -1,0 +1,48 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 720,
+   "title": "Launcher \u2014 Home"
+  },
+  {
+   "file": "Sound.dc.html",
+   "x": 1400,
+   "y": 0,
+   "w": 1280,
+   "h": 720,
+   "title": "Synth \u2014 Sound"
+  },
+  {
+   "file": "Play.dc.html",
+   "x": 0,
+   "y": 900,
+   "w": 1280,
+   "h": 720,
+   "title": "Synth \u2014 Play"
+  },
+  {
+   "file": "Seq.dc.html",
+   "x": 1400,
+   "y": 900,
+   "w": 1280,
+   "h": 720,
+   "title": "Synth \u2014 Seq"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "brief",
+   "x": 0,
+   "y": -150,
+   "w": 620,
+   "text": "Tab5 launcher + FM synth, 1280x720, same instrument language as the radio.\\nSOUND: four macro dials shape any patch; EXPERT opens the full operator editor.\\nPLAY: chord pads + keys + arp + scale lock for one-finger playing.\\nSEQ: 4 tracks, 16 steps, song chain, render to Sonos / card / Mac.\\nKnobs = the two live parameters on each screen. Patch names are invented sample data."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

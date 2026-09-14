@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+  <style>
+    body { margin: 0; background: #17130f; font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, sans-serif; color: #f3ebdf; -webkit-font-smoothing: antialiased; }
+    a { color: #f0b64a; } a:hover { color: #f5c86a; }
+    @keyframes eq { from { transform: scaleY(0.35); } to { transform: scaleY(1); } }
+  </style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; background: #17130f; display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 18px 24px; box-sizing: border-box;">
+
+  <div style="position: absolute; left: -120px; top: 60px; width: 640px; height: 420px; border-radius: 50%; background: radial-gradient(closest-side, rgba(38,92,96,0.55), rgba(38,92,96,0) 70%); pointer-events: none;"></div>
+
+  <div style="position: relative; display: flex; align-items: center; justify-content: space-between; height: 40px;">
+    <div style="display: flex; align-items: baseline; gap: 14px;">
+      <div style="font-family: 'IBM Plex Mono', 'Menlo', monospace; font-size: 26px; font-weight: 500; letter-spacing: 0.02em; color: #f3ebdf;">21:42</div>
+      <div style="font-size: 13px; color: #a89a88;">Sat 13 Sep</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border-radius: 20px; background: #24201a; color: #f3ebdf; font-size: 14px; font-weight: 500;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b64a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></svg>
+        <span>Kitchen Sonos</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a89a88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a89a88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><circle cx="12" cy="20" r="1" fill="#a89a88"></circle></svg>
+      <div style="display: flex; align-items: center; gap: 6px; color: #a89a88; font-size: 13px;">
+        <svg width="24" height="14" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="23" height="12" rx="3" stroke="#a89a88" stroke-width="1.5"></rect><rect x="3" y="3" width="18" height="8" rx="1.5" fill="#a89a88"></rect><rect x="25.5" y="4.5" width="2" height="5" rx="1" fill="#a89a88"></rect></svg>
+        <span>94%</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: relative; flex-grow: 1; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 32px; align-items: center;">
+    <div style="position: relative; width: 300px; height: 300px; border-radius: 18px; overflow: hidden; background: #1f3a40; box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06);">
+      <div style="position: absolute; inset: 0; background: linear-gradient(160deg, #1f3a40 0%, #2f5f66 45%, #0f2226 100%);"></div>
+      <div style="position: absolute; left: 36px; top: 42px; width: 190px; height: 190px; border-radius: 50%; background: #e9d9b2; opacity: 0.92;"></div>
+      <div style="position: absolute; left: 118px; top: 118px; width: 150px; height: 150px; border-radius: 50%; background: #c8532f; mix-blend-mode: multiply;"></div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: linear-gradient(180deg, rgba(15,34,38,0) 0%, rgba(15,34,38,0.85) 100%);"></div>
+      <div style="position: absolute; left: 18px; bottom: 16px; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 0.18em; color: #e9d9b2; text-transform: uppercase;">Album art</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #f0b64a;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f0b64a; box-shadow: 0 0 10px #f0b64a;"></span>
+        <span>Now playing · Radio Paradise · Main Mix</span>
+      </div>
+      <div style="font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 60px; line-height: 1.0; letter-spacing: -0.02em; color: #f3ebdf; text-wrap: balance;">Night Bus Home</div>
+      <div style="font-size: 24px; font-weight: 500; color: #d8ccb8; letter-spacing: -0.005em;">Aldous Verne · <span style="color: #a89a88;">Slow Light (2024)</span></div>
+      <div style="display: flex; gap: 8px; margin-top: 2px;">
+        <div style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #3a322a; color: #a89a88; font-size: 12px; font-weight: 500; display: flex; align-items: center;">AAC 128 kbps</div>
+        <div style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #3a322a; color: #a89a88; font-size: 12px; font-weight: 500; display: flex; align-items: center;">Eclectic</div>
+        <div style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #3a322a; color: #a89a88; font-size: 12px; font-weight: 500; display: flex; align-items: center;">Listening 26 min</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; margin-top: 8px;">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: #f0b64a; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(240,182,74,0.35);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#1a1208"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+        </div>
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #24201a; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f3ebdf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+        </div>
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #24201a; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f3ebdf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        </div>
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #24201a; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f3ebdf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 8px;">
+          <div style="height: 44px; padding: 0 14px; border-radius: 22px; background: #24201a; color: #f3ebdf; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><span style="color: #f0b64a; font-family: 'IBM Plex Mono', monospace;">1</span><span>Paradise</span></div>
+          <div style="height: 44px; padding: 0 14px; border-radius: 22px; background: #24201a; color: #d8ccb8; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;"><span style="color: #a89a88; font-family: 'IBM Plex Mono', monospace;">2</span><span>FIP</span></div>
+          <div style="height: 44px; padding: 0 14px; border-radius: 22px; background: #24201a; color: #d8ccb8; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;"><span style="color: #a89a88; font-family: 'IBM Plex Mono', monospace;">3</span><span>KEXP</span></div>
+          <div style="height: 44px; padding: 0 14px; border-radius: 22px; background: #24201a; color: #d8ccb8; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;"><span style="color: #a89a88; font-family: 'IBM Plex Mono', monospace;">4</span><span>Radio Dos</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: relative; height: 64px; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 0 6px;">
+<div style="width: 12px; height: 28px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 0ms infinite alternate;"></div>
+<div style="width: 12px; height: 29px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 37ms infinite alternate;"></div>
+<div style="width: 12px; height: 40px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 74ms infinite alternate;"></div>
+<div style="width: 12px; height: 33px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 111ms infinite alternate;"></div>
+<div style="width: 12px; height: 45px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 148ms infinite alternate;"></div>
+<div style="width: 12px; height: 44px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 185ms infinite alternate;"></div>
+<div style="width: 12px; height: 39px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 222ms infinite alternate;"></div>
+<div style="width: 12px; height: 51px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 259ms infinite alternate;"></div>
+<div style="width: 12px; height: 40px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 296ms infinite alternate;"></div>
+<div style="width: 12px; height: 50px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 333ms infinite alternate;"></div>
+<div style="width: 12px; height: 40px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 370ms infinite alternate;"></div>
+<div style="width: 12px; height: 40px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 407ms infinite alternate;"></div>
+<div style="width: 12px; height: 46px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 444ms infinite alternate;"></div>
+<div style="width: 12px; height: 52px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 481ms infinite alternate;"></div>
+<div style="width: 12px; height: 35px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 518ms infinite alternate;"></div>
+<div style="width: 12px; height: 34px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 555ms infinite alternate;"></div>
+<div style="width: 12px; height: 37px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 592ms infinite alternate;"></div>
+<div style="width: 12px; height: 37px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 629ms infinite alternate;"></div>
+<div style="width: 12px; height: 29px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 666ms infinite alternate;"></div>
+<div style="width: 12px; height: 23px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 703ms infinite alternate;"></div>
+<div style="width: 12px; height: 24px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 740ms infinite alternate;"></div>
+<div style="width: 12px; height: 15px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 777ms infinite alternate;"></div>
+<div style="width: 12px; height: 16px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 814ms infinite alternate;"></div>
+<div style="width: 12px; height: 12px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 851ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 888ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 25ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 62ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 99ms infinite alternate;"></div>
+<div style="width: 12px; height: 11px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 136ms infinite alternate;"></div>
+<div style="width: 12px; height: 13px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 173ms infinite alternate;"></div>
+<div style="width: 12px; height: 15px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 210ms infinite alternate;"></div>
+<div style="width: 12px; height: 17px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 247ms infinite alternate;"></div>
+<div style="width: 12px; height: 21px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 284ms infinite alternate;"></div>
+<div style="width: 12px; height: 21px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 321ms infinite alternate;"></div>
+<div style="width: 12px; height: 23px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 358ms infinite alternate;"></div>
+<div style="width: 12px; height: 28px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 395ms infinite alternate;"></div>
+<div style="width: 12px; height: 39px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 432ms infinite alternate;"></div>
+<div style="width: 12px; height: 38px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 469ms infinite alternate;"></div>
+<div style="width: 12px; height: 39px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 506ms infinite alternate;"></div>
+<div style="width: 12px; height: 47px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 543ms infinite alternate;"></div>
+<div style="width: 12px; height: 47px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 580ms infinite alternate;"></div>
+<div style="width: 12px; height: 45px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 617ms infinite alternate;"></div>
+<div style="width: 12px; height: 58px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 654ms infinite alternate;"></div>
+<div style="width: 12px; height: 56px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 691ms infinite alternate;"></div>
+<div style="width: 12px; height: 45px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 728ms infinite alternate;"></div>
+<div style="width: 12px; height: 52px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 765ms infinite alternate;"></div>
+<div style="width: 12px; height: 49px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 802ms infinite alternate;"></div>
+<div style="width: 12px; height: 55px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 839ms infinite alternate;"></div>
+<div style="width: 12px; height: 48px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 876ms infinite alternate;"></div>
+<div style="width: 12px; height: 37px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 13ms infinite alternate;"></div>
+<div style="width: 12px; height: 45px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 50ms infinite alternate;"></div>
+<div style="width: 12px; height: 28px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 87ms infinite alternate;"></div>
+<div style="width: 12px; height: 29px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 124ms infinite alternate;"></div>
+<div style="width: 12px; height: 28px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 161ms infinite alternate;"></div>
+<div style="width: 12px; height: 20px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 198ms infinite alternate;"></div>
+<div style="width: 12px; height: 19px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 235ms infinite alternate;"></div>
+<div style="width: 12px; height: 14px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 272ms infinite alternate;"></div>
+<div style="width: 12px; height: 14px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.7s ease-in-out 309ms infinite alternate;"></div>
+<div style="width: 12px; height: 12px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.6s ease-in-out 346ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.5s ease-in-out 383ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.4s ease-in-out 420ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.3s ease-in-out 457ms infinite alternate;"></div>
+<div style="width: 12px; height: 10px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.2s ease-in-out 494ms infinite alternate;"></div>
+<div style="width: 12px; height: 12px; border-radius: 3px 3px 1px 1px; background: linear-gradient(180deg, #f5c86a 0%, #e0993a 100%); transform-origin: bottom; animation: eq 1.1s ease-in-out 531ms infinite alternate;"></div>
+  </div>
+
+  <div style="position: relative; height: 150px; border-radius: 16px; background: #1d1813; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);">
+    <div style="position: absolute; left: 0; right: 0; top: 118px; height: 14px; background: repeating-linear-gradient(90deg, #3a322a 0 1px, transparent 1px 15px); opacity: 0.9;"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 112px; height: 20px; background: repeating-linear-gradient(90deg, #5a4d3d 0 2px, transparent 2px 150px); background-position: 40px 0;"></div>
+    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 220px; background: linear-gradient(90deg, #1d1813 20%, rgba(29,24,19,0) 100%); z-index: 2;"></div>
+    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 220px; background: linear-gradient(270deg, #1d1813 20%, rgba(29,24,19,0) 100%); z-index: 2;"></div>
+<div style="position: absolute; left: 166px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #3a5a6e; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>SF</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">SomaFM Groove</div>
+</div>
+<div style="position: absolute; left: 316px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #5a3d6e; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>6M</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">BBC 6 Music</div>
+</div>
+<div style="position: absolute; left: 466px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #6e3d3d; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>FIP</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">FIP</div>
+</div>
+<div style="position: absolute; left: 616px; top: 8px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 1;">
+  <div style="width: 72px; height: 72px; border-radius: 50%; background: #f0b64a; color: #1a1208; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.02em; box-shadow: 0 0 0 4px #17130f, 0 0 0 6px #f0b64a, 0 12px 32px rgba(240,182,74,0.35);"><span>RP</span></div>
+  <div style="font-size: 13px; font-weight: 700; color: #f3ebdf; white-space: nowrap; letter-spacing: 0.01em;">Radio Paradise</div>
+</div>
+<div style="position: absolute; left: 766px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #3d6e55; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>KX</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">KEXP 90.3</div>
+</div>
+<div style="position: absolute; left: 916px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #6e5a3d; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>RD</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">Radio Dos 99.5</div>
+</div>
+<div style="position: absolute; left: 1066px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #3d4a6e; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>MO</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">Monumental</div>
+</div>
+<div style="position: absolute; left: 1216px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #5a5a5a; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>NTS</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">NTS 1</div>
+</div>
+<div style="position: absolute; left: 1366px; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.62;">
+  <div style="width: 56px; height: 56px; border-radius: 50%; background: #6e3d5a; color: #f3ebdf; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', 'Avenir Next Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; "><span>WR</span></div>
+  <div style="font-size: 13px; font-weight: 500; color: #a89a88; white-space: nowrap; letter-spacing: 0.01em;">Worldwide FM</div>
+</div>
+    <div style="position: absolute; left: 616px; top: 0; bottom: 0; width: 2px; background: #f0b64a; transform: translateX(-50%); box-shadow: 0 0 12px rgba(240,182,74,0.8); z-index: 3;"></div>
+    <div style="position: absolute; left: 616px; bottom: 4px; transform: translateX(-50%); z-index: 3;"><svg width="16" height="10" viewBox="0 0 16 10"><path d="M8 0 16 10H0z" fill="#f0b64a"></path></svg></div>
+    <div style="position: absolute; right: 16px; top: 12px; z-index: 3; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #6e6254;">Turn to tune</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

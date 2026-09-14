@@ -1,0 +1,81 @@
+{
+ "pages": [
+  {
+   "id": "page-1",
+   "name": "Instrument"
+  },
+  {
+   "id": "page-2",
+   "name": "Earlier directions"
+  }
+ ],
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 720,
+   "title": "Now Playing \u2014 Instrument",
+   "page": "page-1"
+  },
+  {
+   "file": "WarmAnalog.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 720,
+   "title": "Alt A \u2014 Warm Analog",
+   "page": "page-2"
+  },
+  {
+   "file": "Night.dc.html",
+   "x": 1400,
+   "y": 0,
+   "w": 1280,
+   "h": 720,
+   "title": "Alt A \u2014 Night Mode",
+   "page": "page-2"
+  },
+  {
+   "file": "DirectionB.dc.html",
+   "x": 0,
+   "y": 900,
+   "w": 1280,
+   "h": 720,
+   "title": "Alt B \u2014 Editorial Mono (low-fi)",
+   "page": "page-2"
+  },
+  {
+   "file": "DirectionC.dc.html",
+   "x": 1400,
+   "y": 900,
+   "w": 1280,
+   "h": 720,
+   "title": "Alt C \u2014 Neon Signal (low-fi)",
+   "page": "page-2"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "brief",
+   "x": 0,
+   "y": -150,
+   "w": 560,
+   "page": "page-1",
+   "text": "Tab5 internet radio, 1280x720 native. Chosen direction: instrument panel (Teenage Engineering inspired).\nNumbered modules, one orange accent, grotesk + mono type, dot-matrix signal meter.\nKnob 1 = tune, knob 2 = volume. OUT hands the stream to a Sonos room. Night mode for this direction still to do."
+  },
+  {
+   "id": "alts",
+   "x": 0,
+   "y": -120,
+   "w": 420,
+   "page": "page-2",
+   "text": "Earlier explorations, kept for reference. Alt A was the first full-fidelity draft; B and C are low-fi sketches."
+  }
+ ],
+ "launch": {
+  "view": "canvas",
+  "page": "page-1"
+ }
+}

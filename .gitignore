@@ -1,0 +1,13 @@
+# credentials and non-redistributable binaries
+main/secrets.h
+main/c6_fw.bin
+# build output
+build/
+managed_components/
+dependencies.lock
+sdkconfig
+sdkconfig.old
+# design canvases: the seeded pages are generated from the .dc.html sources
+design/**/*.html
+!design/**/*.dc.html
+.DS_Store

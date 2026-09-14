@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "device": "m5stack-tab5",
+  "firmware": {
+    "name": "Tab5 Radio",
+    "version": "0.1.0",
+    "url": "https://github.com/cloudspores/tab5/releases/download/v0.1.0/tab5_radio.bin",
+    "notes": "First public build: radio with Sonos output, search, presets."
+  },
+  "packs": []
+}
