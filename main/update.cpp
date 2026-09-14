@@ -73,6 +73,9 @@ bool install(const char *url, void (*progress)(int))
     http.crt_bundle_attach = esp_crt_bundle_attach;
     http.user_agent = "Tab5Radio";
     http.keep_alive_enable = true;
+    http.buffer_size = 8192;          // GitHub Releases redirect through a very long signed URL
+    http.buffer_size_tx = 2048;
+    http.max_redirection_count = 5;
     esp_https_ota_config_t ota = {};
     ota.http_config = &http;
     esp_https_ota_handle_t h = nullptr;
