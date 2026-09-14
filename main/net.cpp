@@ -18,6 +18,7 @@
 #include "esp_wifi.h"
 #include "esp_sntp.h"
 #include "esp_hosted.h"
+#include "mdns.h"
 #include "bsp/esp-bsp.h"
 
 static const char *TAG = "net";
@@ -67,6 +68,8 @@ void start()
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
+    ESP_ERROR_CHECK(mdns_init());          // resolves the bridge's Bonjour name; also advertises "tab5.local"
+    mdns_hostname_set("tab5");
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &on_event, nullptr));

@@ -3,18 +3,48 @@
 #include <cstdio>
 #include "esp_log.h"
 #include "esp_http_client.h"
+#include "esp_timer.h"
 #include "cJSON.h"
 #include "secrets.h"
+#include "mdns.h"
+#include "esp_netif_ip_addr.h"
 
 static const char *TAG = "bridge";
 
 namespace {
 
+/**
+ * The bridge runs on a laptop whose DHCP address changes; BRIDGE_HOST is normally its Bonjour name
+ * ("name.local"). Resolve it with mDNS and cache the answer; a plain IP or hostname passes through.
+ */
+const char *host()
+{
+    static char cached[40] = "";
+    static int64_t resolved_at = 0;
+    const char *h = BRIDGE_HOST;
+    size_t n = strlen(h);
+    if (n < 7 || strcmp(h + n - 6, ".local") != 0) return h;
+    int64_t now = esp_timer_get_time();
+    if (cached[0] && now - resolved_at < 10LL * 60 * 1000000) return cached;   // re-resolve every 10 min
+    char name[64];
+    strlcpy(name, h, sizeof name);
+    name[n - 6] = 0;                                    // mdns wants the name without ".local"
+    esp_ip4_addr_t addr = {};
+    if (mdns_query_a(name, 3000, &addr) == ESP_OK) {
+        snprintf(cached, sizeof cached, IPSTR, IP2STR(&addr));
+        resolved_at = now;
+        ESP_LOGI(TAG, "%s -> %s", h, cached);
+        return cached;
+    }
+    ESP_LOGW(TAG, "mDNS could not resolve %s", h);
+    return cached[0] ? cached : h;
+}
+
 // Perform a request, return body (empty on failure). Small responses only.
 bool request(const char *method, const char *path, const char *json_body, std::string &out)
 {
     char url[256];
-    snprintf(url, sizeof url, "http://%s:%d%s", BRIDGE_HOST, BRIDGE_PORT, path);
+    snprintf(url, sizeof url, "http://%s:%d%s", host(), BRIDGE_PORT, path);
     esp_http_client_config_t cfg = {};
     cfg.url = url;
     cfg.timeout_ms = 6000;
