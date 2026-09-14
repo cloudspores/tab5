@@ -1,0 +1,16 @@
+# systemd user unit for whisper.cpp's server on the Spark (CUDA build).
+#   mkdir -p ~/.config/systemd/user && cp whisper-server.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now whisper-server
+#   loginctl enable-linger $USER      # keep it running when not logged in
+[Unit]
+Description=whisper.cpp server for the Tab5 bridge
+After=network.target
+
+[Service]
+ExecStart=%h/speech/whisper.cpp/build/bin/whisper-server -m %h/speech/whisper.cpp/models/ggml-large-v3-turbo.bin --host 127.0.0.1 --port 8178 -t 8
+WorkingDirectory=%h/speech/whisper.cpp
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

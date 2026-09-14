@@ -10,6 +10,8 @@ final case class Cmd(room: String = "all", action: String) derives JsonDecoder
 final case class Volume(room: String, volume: Option[Int] = None, delta: Option[Int] = None) derives JsonDecoder
 final case class Ask(question: String, system: Option[String] = None) derives JsonDecoder
 final case class Translate(text: String, from: String = "auto", to: String = "en") derives JsonDecoder
+final case class Speak(text: String, language: String = "en") derives JsonDecoder
+final case class Transcript(text: String) derives JsonEncoder
 
 final case class Result(result: String) derives JsonEncoder
 final case class Answer(answer: String) derives JsonEncoder
@@ -29,7 +31,7 @@ object Api:
   private def orError[R, A](z: RIO[R, A]): ZIO[R, Response, A] =
     z.mapError(e => Response.error(Status.BadGateway, Option(e.getMessage).getOrElse(e.toString)))
 
-  def routes(cfg: BridgeConfig): Routes[Sonos & Ollama, Response] = Routes(
+  def routes(cfg: BridgeConfig): Routes[Sonos & Ollama & Speech, Response] = Routes(
     Method.GET / "health" -> handler {
       Response.json(Health(true, "tab5-bridge", BridgeVersion.current, cfg.ollama.model).toJson)
     },
@@ -64,6 +66,21 @@ object Api:
         orError(Ollama.chat(system, a.question))
       }.map(ans => Response.json(Answer(ans).toJson))
     },
+    // ---- Speech on the Spark ----
+    // Body: raw 16 kHz mono 16-bit PCM. Query: ?language=es|en|auto
+    Method.POST / "transcribe" -> handler { (req: Request) =>
+      val lang = req.url.queryParams.queryParam("language").getOrElse("auto")
+      req.body.asChunk.orElseFail(Response.badRequest("unreadable body")).flatMap { pcm =>
+        orError(Speech.transcribe(pcm, lang))
+      }.map(t => Response.json(Transcript(t).toJson))
+    },
+    // Body: {text, language}. Response: audio/wav
+    Method.POST / "speak" -> handler { (req: Request) =>
+      body[Speak](req).flatMap(s => orError(Speech.speak(s.text, s.language))).map { wav =>
+        Response(status = Status.Ok, headers = Headers(Header.ContentType(MediaType.audio.wav)), body = Body.fromChunk(wav))
+      }
+    },
+
     Method.POST / "translate" -> handler { (req: Request) =>
       body[Translate](req).flatMap { t =>
         val system =

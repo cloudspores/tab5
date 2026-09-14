@@ -18,9 +18,9 @@ object Main extends ZIOAppDefault:
     val program = for
       cfg <- ZIO.service[BridgeConfig]
       _   <- ZIO.logInfo(s"tab5-bridge ${BridgeVersion.current} on :${cfg.port}, ollama ${cfg.ollama.url} (${cfg.ollama.model})")
-      _   <- Server.serve(Api.routes(cfg)).provideSomeLayer[Sonos & Ollama](Server.defaultWithPort(cfg.port))
+      _   <- Server.serve(Api.routes(cfg)).provideSomeLayer[Sonos & Ollama & Speech](Server.defaultWithPort(cfg.port))
     yield ()
-    program.provide(BridgeConfig.layer, httpClient, Sonos.live, Ollama.live)
+    program.provide(BridgeConfig.layer, httpClient, Sonos.live, Ollama.live, Speech.live)
 
   /**
    * HTTP client with a long idle timeout: the first call to a large model waits for Ollama to load

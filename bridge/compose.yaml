@@ -10,3 +10,8 @@ services:
       OLLAMA_URL: "http://127.0.0.1:11434"   # Ollama runs on the Spark host
       OLLAMA_MODEL: "gpt-oss:120b"
       SONOS_SCAN_SUBNET: "10.0.0.0/24"
+      WHISPER_URL: "http://127.0.0.1:8178"   # whisper-server (systemd user unit on the host)
+      PIPER_BIN: "/opt/piper/piper/piper"
+      PIPER_VOICES: "/opt/piper/voices"
+    volumes:
+      - ${HOME}/speech/piper:/opt/piper:ro   # Piper binary, its bundled libs, and the voices

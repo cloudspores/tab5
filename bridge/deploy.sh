@@ -13,7 +13,7 @@ test -f target/scala-3.7.4/tab5-bridge.jar
 
 echo "== copying to $HOST:$REMOTE_DIR"
 ssh "$HOST" "mkdir -p $REMOTE_DIR/target/scala-3.7.4"
-scp -q Dockerfile compose.yaml "$HOST:$REMOTE_DIR/"
+scp -q Dockerfile compose.yaml whisper-server.service "$HOST:$REMOTE_DIR/"
 scp -q target/scala-3.7.4/tab5-bridge.jar "$HOST:$REMOTE_DIR/target/scala-3.7.4/"
 
 echo "== starting container"
