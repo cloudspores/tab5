@@ -4,6 +4,8 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+permissions:
+  contents: write
 jobs:
   firmware:
     runs-on: ubuntu-latest
