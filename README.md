@@ -46,13 +46,22 @@ step is compiled out, which is fine on a board whose C6 is already updated).
 
 | Path | What |
 |---|---|
-| `main/main.cpp` | boot, display, WiFi, station list |
-| `main/ui.cpp` | LVGL instrument-panel screen |
-| `main/stream.cpp` | HTTP stream, ICY parsing, decode, playback, auto-reconnect |
-| `main/c6_update.cpp` | one-time OTA of the C6 co-processor firmware over the hosted link |
-| `main/c6_fw.bin` | embedded C6 image: M5Stack's esp-hosted network_adapter 2.12.0 (recovered from the stock UIFlow2 filesystem) |
-| `main/secrets.h` | WiFi credentials (gitignored; copy from `secrets.h.example`) |
-| `sdkconfig.defaults` | board, PSRAM, hosted SDIO pins (Tab5 profile), LVGL fonts, PPA |
+| `main/main.cpp` | boot sequence only |
+| `main/launcher.*`, `app.h` | home screen, app registry and switching |
+| `main/theme.*`, `topbar.*` | instrument-panel palette/fonts/primitives and the shared top bar |
+| `main/net.*` | C6 link, WiFi station, SNTP |
+| `main/console.*` | USB serial command console with per-app verbs |
+| `main/radio_app.*` | radio logic: control task, outputs, presets, search, console verbs |
+| `main/radio_ui.*` | radio screen (LVGL) |
+| `main/stream.*` | HTTP stream, ICY parsing, decode, playback, auto-reconnect |
+| `main/stations.*` | built-in list, Radio Browser search, presets in NVS |
+| `main/bridge.*` | client for the Mac bridge (Sonos rooms, handoff, volume, state) |
+| `main/settings_app.*`, `update.*` | settings screen; firmware update from the GitHub catalogue |
+| `main/c6_update.*` | one-time OTA of the C6 co-processor firmware over the hosted link |
+| `main/fonts/` | Familjen Grotesk and JetBrains Mono converted for LVGL (OFL) |
+| `main/secrets.h` | WiFi credentials and bridge address (gitignored; copy from `secrets.h.example`) |
+| `design/` | design canvas sources for the radio and the synth/launcher |
+| `catalog.json` | firmware/content catalogue read by the launcher |
 
 This folder lives at `~/Projects/esp32/tab5-radio` and is linked from `M5Stack Tab5/radio`.
 It must stay at a path without spaces: ESP-IDF and some components break on them.

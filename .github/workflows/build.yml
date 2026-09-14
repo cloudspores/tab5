@@ -17,7 +17,7 @@ jobs:
           path: "."
           command: |
             idf.py build &&
-            esptool.py --chip esp32p4 merge-bin -o build/tab5_radio_merged.bin @build/flash_args
+            cd build && esptool --chip esp32p4 merge-bin -o tab5_radio_merged.bin @flash_args
       - name: Collect
         run: |
           mkdir -p out

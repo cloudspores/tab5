@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "lvgl.h"
 
 namespace ui {
 
@@ -15,7 +16,7 @@ using PresetHandler = void (*)(int slot, bool store);
 using TextHandler   = void (*)(const char *text);
 using DialHandler   = void (*)(int dial, int value);
 
-void init();
+lv_obj_t *init();               // creates (once) and returns the radio screen; caller holds the LVGL lock
 
 void on_key(KeyHandler h);          // control keys, output selector, band keys, station tap (= next)
 void on_tune(IndexHandler h);       // tap on a band entry

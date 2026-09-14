@@ -1,25 +1,21 @@
-#include "ui.h"
+#include "radio_ui.h"
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include "bsp/esp-bsp.h"
 #include "lvgl.h"
-
-LV_FONT_DECLARE(familjen_bold_52);
-LV_FONT_DECLARE(familjen_medium_24);
-LV_FONT_DECLARE(familjen_semibold_18);
-LV_FONT_DECLARE(familjen_medium_14);
-LV_FONT_DECLARE(jbmono_14);
-LV_FONT_DECLARE(jbmono_32);
+#include "theme.h"
+#include "topbar.h"
 
 namespace {
 
-constexpr uint32_t BG = 0xd4d1c9, PANEL = 0xebeae4, INK = 0x1c1c1a, MID = 0x76746e, LIGHT = 0xb5b2aa, ORANGE = 0xff5a1f;
-constexpr int W = 1280, H = 720, PAD = 24, GAP = 16;
+using theme::panel; using theme::label; using theme::module_label; using theme::keycap;
+using theme::BG; using theme::PANEL; using theme::INK; using theme::MID; using theme::LIGHT; using theme::ORANGE;
+using theme::W; using theme::H; using theme::PAD; using theme::GAP;
+lv_obj_t *radio_scr = nullptr;
 constexpr int METER_BARS = 48, METER_ROWS = 8;
 constexpr int PRESETS = 6;
 
-lv_obj_t *lbl_status, *lbl_clock, *lbl_output, *dot_onair;
 lv_obj_t *lbl_station, *lbl_title, *lbl_format;
 lv_obj_t *dial_arc[2], *dial_ptr[2], *dial_lbl[2]; int dial_cx[2], dial_cy[2];
 lv_obj_t *key_play_lbl, *key_mute_lbl;
@@ -32,54 +28,6 @@ uint8_t   levels[METER_BARS]; int level_head = 0;
 lv_obj_t *overlay, *ta, *kb, *results;
 
 ui::KeyHandler key_h; ui::IndexHandler tune_h; ui::PresetHandler preset_h; ui::TextHandler search_h; ui::IndexHandler result_h; ui::DialHandler dial_h;
-
-lv_obj_t *panel(lv_obj_t *parent, int x, int y, int w, int h)
-{
-    lv_obj_t *p = lv_obj_create(parent);
-    lv_obj_set_pos(p, x, y); lv_obj_set_size(p, w, h);
-    lv_obj_set_style_bg_color(p, lv_color_hex(PANEL), 0);
-    lv_obj_set_style_border_color(p, lv_color_hex(LIGHT), 0);
-    lv_obj_set_style_border_width(p, 1, 0);
-    lv_obj_set_style_radius(p, 6, 0);
-    lv_obj_set_style_pad_all(p, 18, 0);
-    lv_obj_clear_flag(p, LV_OBJ_FLAG_SCROLLABLE);
-    return p;
-}
-
-lv_obj_t *label(lv_obj_t *parent, const char *text, const lv_font_t *font, uint32_t color)
-{
-    lv_obj_t *l = lv_label_create(parent);
-    lv_label_set_text(l, text);
-    lv_obj_set_style_text_font(l, font, 0);
-    lv_obj_set_style_text_color(l, lv_color_hex(color), 0);
-    return l;
-}
-
-void module_label(lv_obj_t *parent, const char *num, const char *name)
-{
-    lv_obj_t *n = label(parent, num, &jbmono_14, INK);
-    lv_obj_align(n, LV_ALIGN_TOP_LEFT, 0, 0);
-    lv_obj_t *t = label(parent, name, &jbmono_14, MID);
-    lv_obj_align_to(t, n, LV_ALIGN_OUT_RIGHT_MID, 12, 0);
-}
-
-// Keycap: square button with mono text, optional caption below.
-lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, lv_event_cb_t cb, void *ud)
-{
-    lv_obj_t *b = lv_button_create(parent);
-    lv_obj_set_size(b, w, h);
-    lv_obj_set_style_bg_color(b, lv_color_hex(accent ? ORANGE : PANEL), 0);
-    lv_obj_set_style_bg_color(b, lv_color_hex(accent ? 0xc8420f : LIGHT), LV_STATE_PRESSED);
-    lv_obj_set_style_border_color(b, lv_color_hex(accent ? ORANGE : LIGHT), 0);
-    lv_obj_set_style_border_width(b, 1, 0);
-    lv_obj_set_style_radius(b, 8, 0);
-    lv_obj_set_style_shadow_width(b, 0, 0);
-    lv_obj_set_style_pad_all(b, 0, 0);
-    lv_obj_t *l = label(b, text, &jbmono_14, accent ? 0xffffff : INK);
-    lv_obj_center(l);
-    if (cb) lv_obj_add_event_cb(b, cb, LV_EVENT_ALL, ud);
-    return b;
-}
 
 void key_cb(lv_event_t *e)
 {
@@ -267,40 +215,15 @@ void style_band_item(int i, bool current)
 
 namespace ui {
 
-void init()
+lv_obj_t *init()
 {
-    bsp_display_lock(0);
-    lv_obj_t *scr = lv_screen_active();
-    lv_obj_set_style_bg_color(scr, lv_color_hex(BG), 0);
-    lv_obj_clear_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
-
-    // ---- top rule ----
-    lv_obj_t *top_l = label(scr, "internet radio", &familjen_semibold_18, INK);
-    lv_obj_set_pos(top_l, PAD, PAD);
-    lv_obj_t *top_sub = label(scr, "TAB5 . ESP32-P4", &jbmono_14, MID);
-    lv_obj_align_to(top_sub, top_l, LV_ALIGN_OUT_RIGHT_BOTTOM, 18, -1);
-    lbl_clock = label(scr, "--:--", &jbmono_14, INK);
-    lv_obj_align(lbl_clock, LV_ALIGN_TOP_RIGHT, -PAD, PAD + 3);
-    lbl_output = label(scr, "OUT: TAB5", &jbmono_14, MID);
-    lv_obj_align_to(lbl_output, lbl_clock, LV_ALIGN_OUT_LEFT_MID, -28, 0);
-    lv_obj_add_flag(lbl_output, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_ext_click_area(lbl_output, 16);
-    lv_obj_add_event_cb(lbl_output, key_cb, LV_EVENT_ALL, (void *)KEY_OUTPUT);
-    lbl_status = label(scr, "BOOT", &jbmono_14, MID);
-    lv_obj_align_to(lbl_status, lbl_output, LV_ALIGN_OUT_LEFT_MID, -28, 0);
-    dot_onair = lv_obj_create(scr);
-    lv_obj_set_size(dot_onair, 10, 10);
-    lv_obj_set_style_radius(dot_onair, 5, 0);
-    lv_obj_set_style_border_width(dot_onair, 0, 0);
-    lv_obj_set_style_bg_color(dot_onair, lv_color_hex(ORANGE), 0);
-    lv_obj_add_flag(dot_onair, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_t *rule = lv_obj_create(scr);
-    lv_obj_set_pos(rule, PAD, PAD + 32); lv_obj_set_size(rule, W - 2 * PAD, 1);
-    lv_obj_set_style_bg_color(rule, lv_color_hex(INK), 0);
-    lv_obj_set_style_border_width(rule, 0, 0); lv_obj_set_style_radius(rule, 0, 0);
+    if (radio_scr) return radio_scr;
+    lv_obj_t *scr = theme::screen();
+    radio_scr = scr;
+    topbar::create(scr, "internet radio");
 
     // ---- row 1: 01 STATION + 02 CONTROL ----
-    const int row1_y = PAD + 32 + GAP, row1_h = 280, ctrl_w = 340;
+    const int row1_y = PAD + topbar::HEIGHT + GAP, row1_h = 280, ctrl_w = 340;
     const int st_w = W - 2 * PAD - ctrl_w - GAP;
     lv_obj_t *p_station = panel(scr, PAD, row1_y, st_w, row1_h);
     module_label(p_station, "01", "STATION");
@@ -433,8 +356,7 @@ void init()
     lv_obj_align(kb, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_keyboard_set_textarea(kb, ta);
     lv_obj_add_event_cb(kb, kb_cb, LV_EVENT_ALL, nullptr);
-
-    bsp_display_unlock();
+    return scr;
 }
 
 void on_key(KeyHandler h)       { key_h = h; }
@@ -444,27 +366,9 @@ void on_search(TextHandler h)   { search_h = h; }
 void on_result(IndexHandler h)  { result_h = h; }
 void on_dial(DialHandler h)     { dial_h = h; }
 
-static void realign_top()
-{
-    lv_obj_align(lbl_clock, LV_ALIGN_TOP_RIGHT, -PAD, PAD + 3);
-    lv_obj_align_to(lbl_output, lbl_clock, LV_ALIGN_OUT_LEFT_MID, -28, 0);
-    lv_obj_align_to(lbl_status, lbl_output, LV_ALIGN_OUT_LEFT_MID, -28, 0);
-    lv_obj_align_to(dot_onair, lbl_status, LV_ALIGN_OUT_LEFT_MID, -10, 0);
-}
-
-void set_status(const char *text)
-{
-    bsp_display_lock(0);
-    bool on = strcmp(text, "ON AIR") == 0;
-    lv_label_set_text(lbl_status, text);
-    lv_obj_set_style_text_color(lbl_status, lv_color_hex(on ? INK : MID), 0);
-    if (on) lv_obj_clear_flag(dot_onair, LV_OBJ_FLAG_HIDDEN); else lv_obj_add_flag(dot_onair, LV_OBJ_FLAG_HIDDEN);
-    realign_top();
-    bsp_display_unlock();
-}
-
-void set_clock(const char *text)  { bsp_display_lock(0); lv_label_set_text(lbl_clock, text); realign_top(); bsp_display_unlock(); }
-void set_output(const char *name) { bsp_display_lock(0); lv_label_set_text_fmt(lbl_output, "OUT: %s", name); realign_top(); bsp_display_unlock(); }
+void set_status(const char *text) { topbar::set_status(text, strcmp(text, "ON AIR") == 0); }
+void set_clock(const char *text)  { topbar::set_clock(text); }
+void set_output(const char *name) { topbar::set_output(name); }
 void set_station(const char *name) { bsp_display_lock(0); lv_label_set_text(lbl_station, name); bsp_display_unlock(); }
 void set_title(const char *text)   { bsp_display_lock(0); lv_label_set_text(lbl_title, text); bsp_display_unlock(); }
 

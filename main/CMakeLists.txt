@@ -17,10 +17,12 @@ if(NOT EXISTS "${C6_FW}")
 endif()
 
 idf_component_register(
-    SRCS "main.cpp" "ui.cpp" "stream.cpp" "c6_update.cpp" "settings.cpp" "stations.cpp" "bridge.cpp"
+    SRCS "main.cpp" "net.cpp" "console.cpp" "launcher.cpp" "theme.cpp" "topbar.cpp"
+         "radio_app.cpp" "radio_ui.cpp" "stream.cpp" "stations.cpp" "bridge.cpp"
+         "settings.cpp" "settings_app.cpp" "update.cpp" "c6_update.cpp"
          "fonts/familjen_bold_52.c" "fonts/familjen_medium_24.c" "fonts/familjen_semibold_18.c" "fonts/familjen_medium_14.c" "fonts/jbmono_14.c" "fonts/jbmono_32.c"
     INCLUDE_DIRS "."
-    REQUIRES esp_wifi nvs_flash esp_netif esp_event esp_http_client esp_timer mbedtls lwip esp_driver_usb_serial_jtag
+    REQUIRES esp_wifi nvs_flash esp_netif esp_event esp_http_client esp_timer mbedtls lwip esp_driver_usb_serial_jtag esp_https_ota app_update esp_app_format
     EMBED_FILES "${C6_FW}"
 )
 if(C6_DEFS)
