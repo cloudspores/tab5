@@ -14,9 +14,14 @@ import java.nio.{ByteBuffer, ByteOrder}
  * Devices send raw 16 kHz mono 16-bit PCM (what the Tab5 and knob microphones produce); the
  * bridge wraps it in a WAV header for whisper.
  */
+/** A transcription with whisper's language detection and its estimate that the clip is not speech. */
+final case class Transcription(text: String, language: String, noSpeechProb: Double)
+
 trait Speech:
   /** Transcribe 16 kHz mono 16-bit PCM. `language` is an ISO code or "auto". */
   def transcribe(pcm16k: Chunk[Byte], language: String): Task[String]
+  /** Transcribe with detected language and no-speech probability. */
+  def transcribeDetailed(pcm16k: Chunk[Byte], language: String): Task[Transcription]
   /** Synthesize speech; returns a complete WAV file (22.05 kHz mono 16-bit from Piper's medium voices). */
   def speak(text: String, language: String): Task[Chunk[Byte]]
 
@@ -39,14 +44,19 @@ object Speech:
     Chunk.fromArray(b.array())
 
 private final case class WhisperResponse(text: String) derives JsonDecoder
+private final case class WhisperSegment(no_speech_prob: Option[Double]) derives JsonDecoder
+private final case class WhisperVerbose(text: String, detected_language: Option[String], language: Option[String], segments: Option[List[WhisperSegment]]) derives JsonDecoder
 
 private final case class SpeechLive(cfg: SpeechConfig, client: Client) extends Speech:
 
   def transcribe(pcm: Chunk[Byte], language: String): Task[String] =
+    transcribeDetailed(pcm, language).map(_.text)
+
+  def transcribeDetailed(pcm: Chunk[Byte], language: String): Task[Transcription] =
     val wav = Speech.wavHeader(pcm.length, 16000) ++ pcm
     val form = Form(
       FormField.binaryField("file", wav, MediaType.audio.wav, filename = Some("audio.wav")),
-      FormField.simpleField("response_format", "json"),
+      FormField.simpleField("response_format", "verbose_json"),
       FormField.simpleField("language", if language == "auto" then "auto" else language),
       FormField.simpleField("temperature", "0.0")
     )
@@ -61,8 +71,10 @@ private final case class SpeechLive(cfg: SpeechConfig, client: Client) extends S
       resp  <- client.batched(req).timeoutFail(new java.io.IOException("whisper timed out"))(60.seconds)
       text <- resp.body.asString
       _    <- ZIO.fail(new java.io.IOException(s"whisper HTTP ${resp.status.code}: ${text.take(200)}")).when(!resp.status.isSuccess)
-      out  <- ZIO.fromEither(text.fromJson[WhisperResponse]).mapError(e => new java.io.IOException(s"whisper response: $e"))
-    yield out.text.trim
+      out  <- ZIO.fromEither(text.fromJson[WhisperVerbose]).mapError(e => new java.io.IOException(s"whisper response: $e"))
+      segs  = out.segments.getOrElse(Nil).flatMap(_.no_speech_prob)
+      noSp  = if segs.isEmpty then 0.0 else segs.sum / segs.size
+    yield Transcription(out.text.trim, out.detected_language.orElse(out.language).getOrElse("auto"), noSp)
 
   def speak(text: String, language: String): Task[Chunk[Byte]] =
     val voice = if language.startsWith("es") then cfg.voiceEs else cfg.voiceEn

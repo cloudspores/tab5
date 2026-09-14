@@ -10,6 +10,7 @@ ThisBuild / version      := "0.1.0"
 lazy val bridge = (project in file("."))
   .settings(
     name := "tab5-bridge",
+    Compile / mainClass := Some("tab5.bridge.Main"),   // tools.LiveClient is a second entry point
     scalacOptions ++= Seq(
       "-deprecation", "-feature", "-unchecked",
       "-Wunused:all", "-Wvalue-discard", "-Wnonunit-statement",

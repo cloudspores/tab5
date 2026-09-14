@@ -31,7 +31,32 @@ object Api:
   private def orError[R, A](z: RIO[R, A]): ZIO[R, Response, A] =
     z.mapError(e => Response.error(Status.BadGateway, Option(e.getMessage).getOrElse(e.toString)))
 
+  /** Live translation over a WebSocket; see Live for the protocol. */
+  private def liveSocket(cfg: BridgeConfig): WebSocketApp[Sonos & Ollama & Speech] =
+    Handler.webSocket { channel =>
+      for
+        speech <- ZIO.service[Speech]
+        ollama <- ZIO.service[Ollama]
+        in     <- Queue.bounded[Live.In](256)
+        out    <- Queue.bounded[Live.Out](64)
+        sender <- out.take.flatMap {
+                    case Live.Out.Text(json) => channel.send(ChannelEvent.Read(WebSocketFrame.text(json)))
+                    case Live.Out.Audio(pcm) => channel.send(ChannelEvent.Read(WebSocketFrame.binary(pcm)))
+                  }.forever.fork
+        session <- Live.run(in, out, speech, ollama, cfg.translator.model, cfg.translator.live).fork
+        _      <- channel.receiveAll {
+                    case ChannelEvent.Read(WebSocketFrame.Binary(bytes)) => in.offer(Live.In.Pcm(bytes)).unit
+                    case ChannelEvent.Read(WebSocketFrame.Text(text))    => in.offer(Live.In.Control(text)).unit
+                    case ChannelEvent.Read(WebSocketFrame.Close(_, _))   => in.offer(Live.In.Closed).unit
+                    case ChannelEvent.Unregistered                        => in.offer(Live.In.Closed).unit
+                    case _                                                => ZIO.unit
+                  }.ensuring(in.offer(Live.In.Closed) *> session.join.ignore *> sender.interrupt)
+      yield ()
+    }
+
   def routes(cfg: BridgeConfig): Routes[Sonos & Ollama & Speech, Response] = Routes(
+    Method.GET / "translate" / "live" -> handler(liveSocket(cfg).toResponse),
+
     Method.GET / "health" -> handler {
       Response.json(Health(true, "tab5-bridge", BridgeVersion.current, cfg.ollama.model).toJson)
     },
