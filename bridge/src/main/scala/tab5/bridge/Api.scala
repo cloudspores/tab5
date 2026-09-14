@@ -1,0 +1,75 @@
+package tab5.bridge
+
+import zio.*
+import zio.http.*
+import zio.json.*
+
+/** Request bodies. Field names match the Python bridge so the Tab5 and knobs need no changes. */
+final case class PlayUrl(room: String, url: String, title: String = "") derives JsonDecoder
+final case class Cmd(room: String = "all", action: String) derives JsonDecoder
+final case class Volume(room: String, volume: Option[Int] = None, delta: Option[Int] = None) derives JsonDecoder
+final case class Ask(question: String, system: Option[String] = None) derives JsonDecoder
+final case class Translate(text: String, from: String = "auto", to: String = "en") derives JsonDecoder
+
+final case class Result(result: String) derives JsonEncoder
+final case class Answer(answer: String) derives JsonEncoder
+final case class Translation(text: String, from: String, to: String) derives JsonEncoder
+final case class Health(ok: Boolean, service: String, version: String, model: String) derives JsonEncoder
+
+/** HTTP surface of the bridge. */
+object Api:
+
+  /** Decode a JSON body or answer 400. */
+  private def body[A: JsonDecoder](req: Request): IO[Response, A] =
+    req.body.asString.orElseFail(Response.badRequest("unreadable body")).flatMap { s =>
+      ZIO.fromEither(s.fromJson[A]).mapError(e => Response.badRequest(s"bad request: $e"))
+    }
+
+  /** Turn a failed effect into a 502 with the message, so the device sees why. */
+  private def orError[R, A](z: RIO[R, A]): ZIO[R, Response, A] =
+    z.mapError(e => Response.error(Status.BadGateway, Option(e.getMessage).getOrElse(e.toString)))
+
+  def routes(cfg: BridgeConfig): Routes[Sonos & Ollama, Response] = Routes(
+    Method.GET / "health" -> handler {
+      Response.json(Health(true, "tab5-bridge", BridgeVersion.current, cfg.ollama.model).toJson)
+    },
+
+    // ---- Sonos: same contract as the Python bridge ----
+    Method.GET / "sonos" / "rooms" -> handler {
+      orError(Sonos.rooms).map(rs => Response.json(rs.toJson))
+    },
+    Method.GET / "sonos" / "state" -> handler { (req: Request) =>
+      val room = req.url.queryParams.queryParam("room").getOrElse("")
+      orError(Sonos.state(room)).map(r => Response.json(r.toJson))
+    },
+    Method.POST / "sonos" / "play_url" -> handler { (req: Request) =>
+      body[PlayUrl](req).flatMap(p => orError(Sonos.playUrl(p.room, p.url, p.title))).map(m => Response.json(Result(m).toJson))
+    },
+    Method.POST / "sonos" / "cmd" -> handler { (req: Request) =>
+      body[Cmd](req).flatMap(c => orError(Sonos.command(c.room, c.action))).map(m => Response.json(Result(m).toJson))
+    },
+    Method.POST / "sonos" / "volume" -> handler { (req: Request) =>
+      body[Volume](req).flatMap { v =>
+        val target = v.volume.orElse(v.delta.map(d => 50 + d))   // delta without a current reading: best effort
+        orError(target match
+          case Some(t) => Sonos.setVolume(v.room, t)
+          case None    => ZIO.fail(new IllegalArgumentException("volume or delta required")))
+      }.map(m => Response.json(Result(m).toJson))
+    },
+
+    // ---- Language model on the Spark ----
+    Method.POST / "ask" -> handler { (req: Request) =>
+      body[Ask](req).flatMap { a =>
+        val system = a.system.getOrElse("You are a concise assistant on a small kitchen display. Answer in at most three short sentences.")
+        orError(Ollama.chat(system, a.question))
+      }.map(ans => Response.json(Answer(ans).toJson))
+    },
+    Method.POST / "translate" -> handler { (req: Request) =>
+      body[Translate](req).flatMap { t =>
+        val system =
+          s"""You translate between Spanish and English for a conversation in Costa Rica. Source language: ${t.from} (detect it if "auto"). Target: ${t.to}.
+             |Keep the register (usted/vos) natural for Costa Rica. Reply with the translation only, no commentary.""".stripMargin
+        orError(Ollama.chat(system, t.text)).map(out => Translation(out, t.from, t.to))
+      }.map(tr => Response.json(tr.toJson))
+    }
+  )

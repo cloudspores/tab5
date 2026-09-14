@@ -11,3 +11,10 @@ sdkconfig.old
 design/**/*.html
 !design/**/*.dc.html
 .DS_Store
+# scala
+bridge/target/
+bridge/project/target/
+bridge/project/project/
+bridge/.bsp/
+bridge/.metals/
+bridge/.bloop/

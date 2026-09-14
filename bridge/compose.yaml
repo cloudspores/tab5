@@ -1,0 +1,12 @@
+# docker compose up -d --build   (on the Spark)
+services:
+  bridge:
+    build: .
+    container_name: tab5-bridge
+    network_mode: host          # SSDP multicast + the Tab5 reaching :8765 directly
+    restart: unless-stopped
+    environment:
+      TAB5_PORT: "8765"
+      OLLAMA_URL: "http://127.0.0.1:11434"   # Ollama runs on the Spark host
+      OLLAMA_MODEL: "gpt-oss:120b"
+      SONOS_SCAN_SUBNET: "10.0.0.0/24"

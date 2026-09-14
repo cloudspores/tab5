@@ -35,3 +35,28 @@ jobs:
         with:
           files: out/*
           generate_release_notes: true
+
+  bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+      - name: Compile, test, assemble
+        run: sbt -batch compile test assembly
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tab5-bridge
+          path: bridge/target/scala-3.7.4/tab5-bridge.jar
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bridge/target/scala-3.7.4/tab5-bridge.jar

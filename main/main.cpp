@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "nvs_flash.h"
 #include "bsp/esp-bsp.h"
 #include "lvgl.h"
@@ -86,6 +87,7 @@ static void register_console()
         net::set_credentials(ssid, sp + 1);
     }, "wifi SSID PASSWORD (stored in NVS)");
     console::add("bridge", [](const char *a, int) { if (*a) bridge::set_host(a); else ESP_LOGW(TAG, "usage: bridge NAME.local|IP"); }, "bridge HOST (stored in NVS)");
+    console::add("restart", [](const char *, int) { ESP_LOGW(TAG, "restart requested"); vTaskDelay(pdMS_TO_TICKS(200)); esp_restart(); }, "reboot the device");
     console::add("open",  [](const char *a, int) { launcher::open(*a ? a : "radio"); }, "open APP (radio, settings)");
     console::add("check",   [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, nullptr, 4, nullptr, 0); }, "check the GitHub catalogue for a newer firmware");
     console::add("install", [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, (void *)1, 4, nullptr, 0); }, "install the catalogue firmware if newer (restarts)");
