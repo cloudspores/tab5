@@ -41,11 +41,12 @@ Type `help` on the USB serial console (115200). Verbs: `status next tune preset 
 play bright search cr home result off` for the radio; `home open check install wifi bridge` for the
 system.
 
-## Bridge endpoints used
+## Bridge
 
-`GET /health`, `GET /sonos/rooms`, `POST /sonos/play_url {room,url,title}`, `POST /sonos/cmd {room,action}`,
-`POST /sonos/volume {room,volume}`, `GET /sonos/state?room=`. The bridge lives in the knob project
-(`../Waveshare .../bridge`, `uv run server.py`); `BRIDGE_HOST` in `main/secrets.h` must match the Mac's IP.
+The device talks to the bridge in `bridge/` (Scala 3 + ZIO), which runs as a container on the DGX Spark
+and speaks to Sonos over UPnP and to Ollama for the language model. See `bridge/README.md` for the
+endpoints and `bridge/deploy.sh` to deploy. The device stores the bridge's Bonjour name in NVS
+(console: `bridge spark-4dfb.local`).
 
 ## Repository, builds, releases
 
