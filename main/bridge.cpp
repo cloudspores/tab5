@@ -60,7 +60,7 @@ bool request(const char *method, const char *path, const char *json_body, std::s
     snprintf(url, sizeof url, "http://%s:%d%s", host(), BRIDGE_PORT, path);
     esp_http_client_config_t cfg = {};
     cfg.url = url;
-    cfg.timeout_ms = 6000;
+    cfg.timeout_ms = 12000;   // first /sonos/rooms after a bridge start includes discovery
     cfg.method = strcmp(method, "POST") == 0 ? HTTP_METHOD_POST : HTTP_METHOD_GET;
     esp_http_client_handle_t c = esp_http_client_init(&cfg);
     if (!c) return false;

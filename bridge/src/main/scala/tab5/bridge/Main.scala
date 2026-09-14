@@ -28,7 +28,7 @@ object Main extends ZIOAppDefault:
    */
   private val httpClient: ZLayer[Any, Throwable, Client] =
     ZLayer.make[Client](
-      ZLayer.succeed(ZClient.Config.default.idleTimeout(5.minutes).connectionTimeout(10.seconds)),
+      ZLayer.succeed(ZClient.Config.default.idleTimeout(5.minutes).connectionTimeout(10.seconds).disabledConnectionPool),
       ZLayer.succeed(NettyConfig.default),
       NettyClientDriver.live,
       DnsResolver.default,

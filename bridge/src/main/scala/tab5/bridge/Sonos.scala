@@ -144,10 +144,12 @@ private final case class SonosLive(cfg: SonosConfig, client: Client, cache: Ref[
       case "ZoneGroupTopology" => "/ZoneGroupTopology/Control"
       case "RenderingControl"  => "/MediaRenderer/RenderingControl/Control"
       case _                   => "/MediaRenderer/AVTransport/Control"
+    // Sonos closes the connection after every response; say so up front so no pooled socket is reused.
     val req = Request
       .post(URL.decode(s"http://$ip:$Port$path").toOption.get, Body.fromString(Soap.envelope(service, action, args)))
       .addHeader(Header.ContentType(MediaType.text.xml, charset = Some(java.nio.charset.StandardCharsets.UTF_8)))
       .addHeader(Header.Custom("SOAPACTION", Soap.actionHeader(service, action)))
+      .addHeader(Header.Connection.Close)
     for
       resp <- client.batched(req).timeoutFail(new java.io.IOException(s"$action timed out on $ip"))(8.seconds)
       body <- resp.body.asString
@@ -166,7 +168,8 @@ private final case class SonosLive(cfg: SonosConfig, client: Client, cache: Ref[
   private def roomState(p: Player): Task[Room] =
     for
       coord  <- coordinatorOf(p)
-      tinfo  <- av(coord, "GetTransportInfo").map(Soap.field(_, "CurrentTransportState")).orElseSucceed("UNKNOWN")
+      tinfo  <- av(coord, "GetTransportInfo").map(Soap.field(_, "CurrentTransportState"))
+                  .catchAll(e => ZIO.logWarning(s"sonos: ${p.name} transport: ${e.getMessage}").as("UNKNOWN"))
       vol    <- rc(p, "GetVolume").map(Soap.field(_, "CurrentVolume")).map(_.toIntOption.getOrElse(0)).orElseSucceed(0)
       mute   <- rc(p, "GetMute").map(Soap.field(_, "CurrentMute") == "1").orElseSucceed(false)
       meta   <- av(coord, "GetPositionInfo").map(Soap.field(_, "TrackMetaData")).orElseSucceed("")
