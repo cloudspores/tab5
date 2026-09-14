@@ -63,11 +63,16 @@ static void start_display()
 }
 
 /** Console verbs that belong to the system rather than an app. */
-static void update_check_task(void *)
+static void update_task(void *arg)
 {
+    const bool install = arg != nullptr;
     char v[24] = "", u[256] = "", n[160] = "";
     bool newer = update::check(v, sizeof v, u, sizeof u, n, sizeof n);
     ESP_LOGI(TAG, "running %s, catalog %s: %s", update::running_version(), v[0] ? v : "?", newer ? "UPDATE AVAILABLE" : "up to date");
+    if (install && newer) {
+        update::install(u, [](int pct) { ESP_LOGI(TAG, "installing %d%%", pct); });   // restarts on success
+        ESP_LOGE(TAG, "install failed");
+    }
     vTaskDelete(nullptr);
 }
 
@@ -75,7 +80,8 @@ static void register_console()
 {
     console::add("home",  [](const char *, int) { launcher::home(); }, "launcher home screen");
     console::add("open",  [](const char *a, int) { launcher::open(*a ? a : "radio"); }, "open APP (radio, settings)");
-    console::add("check", [](const char *, int) { xTaskCreatePinnedToCore(update_check_task, "upd_check", 8 * 1024, nullptr, 4, nullptr, 0); }, "check the GitHub catalogue for a newer firmware");
+    console::add("check",   [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, nullptr, 4, nullptr, 0); }, "check the GitHub catalogue for a newer firmware");
+    console::add("install", [](const char *, int) { xTaskCreatePinnedToCore(update_task, "update", 8 * 1024, (void *)1, 4, nullptr, 0); }, "install the catalogue firmware if newer (restarts)");
 }
 
 extern "C" void app_main(void)
