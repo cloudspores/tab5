@@ -86,13 +86,11 @@ lv_obj_t *init()
     lv_obj_set_size(row, 340, 44); lv_obj_align(row, LV_ALIGN_TOP_RIGHT, 0, 26);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW); lv_obj_set_style_pad_column(row, 8, 0);
-    keycap(row, LV_SYMBOL_LEFT, 44, 44, false, key_cb, (void *)KEY_PREV);
-    keycap(row, LV_SYMBOL_RIGHT, 44, 44, false, key_cb, (void *)KEY_NEXT);
+    keycap(row, "<", 44, 44, false, key_cb, (void *)KEY_PREV);
+    keycap(row, ">", 44, 44, false, key_cb, (void *)KEY_NEXT);
     keycap(row, "RANDOM", 84, 44, true, key_cb, (void *)KEY_RANDOM);
     keycap(row, "PANIC", 56, 44, false, key_cb, (void *)KEY_PANIC);
-    keycap(row, "PLAY " LV_SYMBOL_RIGHT, 68, 44, false, key_cb, (void *)KEY_PLAY);
-    lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 0), 0), &lv_font_montserrat_14, 0);   // arrow glyphs
-    lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 1), 0), &lv_font_montserrat_14, 0);
+    keycap(row, "PLAY >", 68, 44, false, key_cb, (void *)KEY_PLAY);
     static const char *names[4] = {"BRIGHT", "ATTACK", "RELEASE", "MOTION"};
     const int dsize = 96, dy = sound_h - 36 - dsize - 30;
     for (int i = 0; i < 4; i++) dials[i] = dial_create(p, 20 + i * ((left_w - 36 - 40) / 4) + 10, dy, dsize, names[i], 0, 100, dial_cb);

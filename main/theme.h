@@ -21,13 +21,14 @@ lv_obj_t *panel(lv_obj_t *parent, int x, int y, int w, int h);
 lv_obj_t *label(lv_obj_t *parent, const char *text, const lv_font_t *font, uint32_t color);
 void module_label(lv_obj_t *parent, const char *num, const char *name);
 lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, lv_event_cb_t cb, void *ud);
-void grow_on_press(lv_obj_t *obj);                  // swell to 112 % while touched (keys, pads)
+void grow_on_press(lv_obj_t *obj);                  // swell to 125 % while touched (keys, pads)
 void keycap_accent(lv_obj_t *keycap, bool on);           // toggle/radio state: accent when on
 void keycap_text(lv_obj_t *keycap, const char *text);
 
 /** A rotary dial: light disc, orange pointer, touch arc underneath, mono caption below. */
 struct Dial {
     lv_obj_t *arc, *ptr, *lbl, *disc;
+    lv_point_precise_t pts[2];   ///< pointer line end points (the line object references them)
     int cx, cy;
     const char *caption;
     void (*on_change)(Dial *, int value, bool released);   ///< value while dragging; released = finger up

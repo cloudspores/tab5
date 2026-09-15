@@ -27,6 +27,7 @@
 #include "settings_app.h"
 #include "translate_app.h"
 #include "synth_app.h"
+#include "screenshot.h"
 
 static const char *TAG = "main";
 
@@ -116,6 +117,7 @@ extern "C" void app_main(void)
     register_console();
     translate::register_console();
     synth_app_ns::register_console();
+    screenshot::register_console();
 
     // Show the last-used screen before the network is up so the device feels instant.
     char last_app[16] = "radio";

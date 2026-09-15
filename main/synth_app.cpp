@@ -314,6 +314,7 @@ void on_enter()
     choose_voice(voice_idx);
     set_octave(octave_base);
     synth_play_ui::refresh();
+    topbar::set_status("LIVE", true);
     synth_relay::start();                             // restores a Sonos output if one was chosen
     synth_relay::discover();
     synth_ui::set_volume(stream::volume_percent());
@@ -328,6 +329,7 @@ void on_exit()
     for (int i = 0; i < 30 && meter_task_h; i++) vTaskDelay(pdMS_TO_TICKS(10));
     synth_relay::stop();                              // hands the Sonos room back
     synth::stop();
+    topbar::set_status("", false);
 }
 
 const char *status() { return synth::running() ? "ENGINE ON" : ""; }

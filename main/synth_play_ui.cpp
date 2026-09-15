@@ -161,8 +161,8 @@ lv_obj_t *init()
     lv_obj_t *ps = panel(scr, rx, top + rh + GAP, right_w, rh);
     module_label(ps, "04", "SCALE");
     lbl_scale = label(ps, "C major", &familjen_bold_52, INK); lv_obj_align(lbl_scale, LV_ALIGN_TOP_LEFT, 0, 24);
-    lv_obj_t *r1 = keycap(ps, "ROOT " LV_SYMBOL_LEFT, 74, 38, false, key_cb, (void *)KEY_ROOT_DOWN); lv_obj_align(r1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-    lv_obj_t *r2 = keycap(ps, "ROOT " LV_SYMBOL_RIGHT, 74, 38, false, key_cb, (void *)KEY_ROOT_UP); lv_obj_align(r2, LV_ALIGN_BOTTOM_LEFT, 82, 0);
+    lv_obj_t *r1 = keycap(ps, "< ROOT", 74, 38, false, key_cb, (void *)KEY_ROOT_DOWN); lv_obj_align(r1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_t *r2 = keycap(ps, "ROOT >", 74, 38, false, key_cb, (void *)KEY_ROOT_UP); lv_obj_align(r2, LV_ALIGN_BOTTOM_LEFT, 82, 0);
     k_mode = keycap(ps, "MAJOR", 108, 38, false, key_cb, (void *)KEY_MODE); lv_obj_align(k_mode, LV_ALIGN_BOTTOM_LEFT, 164, 0);
     k_lock = keycap(ps, "LOCK", 56, 38, false, key_cb, (void *)KEY_LOCK); lv_obj_align(k_lock, LV_ALIGN_BOTTOM_LEFT, 280, 0);
 
@@ -170,9 +170,9 @@ lv_obj_t *init()
     module_label(pp, "05", "PATCH");
     lbl_patch = label(pp, "--", &familjen_medium_24, INK); lv_obj_align(lbl_patch, LV_ALIGN_TOP_LEFT, 0, 28);
     lbl_patch_idx = label(pp, "", &jbmono_14, MID); lv_obj_align(lbl_patch_idx, LV_ALIGN_TOP_LEFT, 0, 62);
-    lv_obj_t *p1 = keycap(pp, LV_SYMBOL_LEFT, 48, 38, false, key_cb, (void *)KEY_PREV); lv_obj_align(p1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-    lv_obj_t *p2 = keycap(pp, LV_SYMBOL_RIGHT, 48, 38, false, key_cb, (void *)KEY_NEXT); lv_obj_align(p2, LV_ALIGN_BOTTOM_LEFT, 56, 0);
-    lv_obj_t *p3 = keycap(pp, "SOUND " LV_SYMBOL_RIGHT, 96, 38, true, key_cb, (void *)KEY_SOUND); lv_obj_align(p3, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_t *p1 = keycap(pp, "<", 48, 38, false, key_cb, (void *)KEY_PREV); lv_obj_align(p1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_t *p2 = keycap(pp, ">", 48, 38, false, key_cb, (void *)KEY_NEXT); lv_obj_align(p2, LV_ALIGN_BOTTOM_LEFT, 56, 0);
+    lv_obj_t *p3 = keycap(pp, "SOUND >", 96, 38, true, key_cb, (void *)KEY_SOUND); lv_obj_align(p3, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 
     refresh_locked();
     return scr;

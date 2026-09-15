@@ -57,7 +57,7 @@ void grow_on_press(lv_obj_t *obj)
     if (!init) { lv_style_transition_dsc_init(&tr, props, lv_anim_path_ease_out, 60, 0, nullptr); init = true; }
     lv_obj_set_style_transform_pivot_x(obj, lv_pct(50), 0);
     lv_obj_set_style_transform_pivot_y(obj, lv_pct(50), 0);
-    lv_obj_set_style_transform_scale(obj, 287, LV_STATE_PRESSED);   // 256 = 100 %
+    lv_obj_set_style_transform_scale(obj, 320, LV_STATE_PRESSED);   // 256 = 100 %, so 125 %: visible around a fingertip
     lv_obj_set_style_transition(obj, &tr, LV_STATE_PRESSED);
     lv_obj_set_style_transition(obj, &tr, 0);
 }
@@ -90,9 +90,7 @@ void dial_pointer(Dial *d)
     float f = mx > mn ? (float)(v - mn) / (float)(mx - mn) : 0.0f;
     float ang = (135.0f + 270.0f * f) * 3.14159265f / 180.0f;     // arc angles: 0 = 3 o'clock, clockwise
     const int r_in = 12, r_out = (int)(lv_obj_get_width(d->arc) * 0.38f);
-    static lv_point_precise_t pts[16][2]; static int slot = 0;
-    lv_point_precise_t *p = pts[(intptr_t)d % 16];
-    (void)slot;
+    lv_point_precise_t *p = d->pts;                       // the line keeps a pointer to these: one pair per dial
     p[0].x = d->cx + (int)(r_in * cosf(ang));  p[0].y = d->cy + (int)(r_in * sinf(ang));
     p[1].x = d->cx + (int)(r_out * cosf(ang)); p[1].y = d->cy + (int)(r_out * sinf(ang));
     lv_line_set_points(d->ptr, p, 2);

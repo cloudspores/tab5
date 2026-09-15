@@ -72,6 +72,16 @@ object Api:
     Method.GET / "synth" / "stream.mp3" -> handler {
       SynthRelay.stream.map(s => Response(body = Body.fromStreamChunked(s), headers = Headers(Header.ContentType(MediaType.audio.mpeg), Header.CacheControl.NoCache)))
     },
+    // development aid: the device uploads a raw RGB565 screenshot, saved for the developer to fetch
+    Method.POST / "shot" -> handler { (req: Request) =>
+      val w = req.url.queryParams.queryParam("w").getOrElse("0"); val h = req.url.queryParams.queryParam("h").getOrElse("0")
+      for
+        bytes <- req.body.asChunk.orElseFail(Response.badRequest("unreadable body"))
+        path   = s"/tmp/tab5-shot-${w}x${h}.rgb565"
+        _     <- ZIO.attemptBlocking(java.nio.file.Files.write(java.nio.file.Paths.get(path), bytes.toArray)).orElseFail(Response.internalServerError("write failed"))
+        _     <- ZIO.logInfo(s"screenshot ${bytes.length} bytes -> $path")
+      yield Response.json(Result(path).toJson)
+    },
     Method.POST / "synth" / "sonos" -> handler { (req: Request) =>
       for
         r   <- body[RelayTo](req)
