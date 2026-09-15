@@ -33,6 +33,8 @@ SemaphoreHandle_t mtx;
 std::vector<std::string> outs = {LOCAL};
 std::string wanted = LOCAL, active = LOCAL;
 bool running = false, discover_wanted = false;
+int  vol_wanted = -1;                                ///< room volume to apply, -1 = nothing pending
+volatile int changes = 0;                            ///< bumped when outputs or the selection change
 char state[48] = "TAB5 HP";
 TaskHandle_t worker_h = nullptr;
 esp_websocket_client_handle_t ws = nullptr;
@@ -42,7 +44,7 @@ void set_state(const char *t) { strlcpy(state, t, sizeof state); }
 
 void ws_event(void *, esp_event_base_t, int32_t id, void *)
 {
-    if (id == WEBSOCKET_EVENT_CONNECTED) { connected = true; ESP_LOGI(TAG, "stream connected"); }
+    if (id == WEBSOCKET_EVENT_CONNECTED) { synth::relay_flush(); connected = true; ESP_LOGI(TAG, "stream connected"); }
     else if (id == WEBSOCKET_EVENT_DISCONNECTED || id == WEBSOCKET_EVENT_CLOSED) connected = false;
 }
 
@@ -85,8 +87,9 @@ void reconcile()
         synth::set_local_mute(false);
         set_state("TAB5 HP");
     } else {
+        if (!net::connected()) { set_state("WAITING FOR WIFI"); return; }   // stay pending; retried every loop
         set_state("CONNECTING");
-        if (!net::connected() || !bridge::synth_relay(target.c_str())) {
+        if (!bridge::synth_relay(target.c_str())) {
             ESP_LOGW(TAG, "could not start the relay to %s", target.c_str());
             set_state("BRIDGE FAILED");
             xSemaphoreTake(mtx, portMAX_DELAY); wanted = LOCAL; xSemaphoreGive(mtx);
@@ -101,6 +104,7 @@ void reconcile()
         set_state(t);
     }
     xSemaphoreTake(mtx, portMAX_DELAY); active = target; xSemaphoreGive(mtx);
+    changes = changes + 1;
 }
 
 void worker(void *)
@@ -116,9 +120,11 @@ void worker(void *)
                 for (auto &r : rooms) outs.push_back(r);
                 xSemaphoreGive(mtx);
                 ESP_LOGI(TAG, "%d outputs", (int)outs.size());
+                changes = changes + 1;
             }
         }
         reconcile();
+        if (vol_wanted >= 0 && active != LOCAL) { int v = vol_wanted; vol_wanted = -1; bridge::sonos_volume(active.c_str(), v); }
         if (synth::relay() && ws && connected) {
             int n = synth::relay_read(buf, sizeof buf);
             if (n >= CHUNK / 2) { esp_websocket_client_send_bin(ws, (const char *)buf, n, pdMS_TO_TICKS(1500)); continue; }   // a WiFi stall must not close the socket
@@ -167,7 +173,11 @@ void select(const char *name)
     wanted = name;
     xSemaphoreGive(mtx);
     settings::set_str("synth_out", name);
+    changes = changes + 1;
 }
+
+void set_volume(int percent) { vol_wanted = percent; }
+int  changed_count() { return changes; }
 
 void next()
 {

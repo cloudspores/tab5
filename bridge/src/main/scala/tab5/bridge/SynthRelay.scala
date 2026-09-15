@@ -37,7 +37,7 @@ object SynthRelay:
     for
       cfg   <- ZIO.service[BridgeConfig]
       host  <- ZIO.attempt(if cfg.synth.publicHost.nonEmpty then cfg.synth.publicHost else detectHost(cfg.sonos.scanSubnet))
-      pcm   <- Queue.sliding[Chunk[Byte]](64)                  // ~3 s of audio at the device's 46 ms chunks
+      pcm   <- Queue.sliding[Chunk[Byte]](8)                   // ~370 ms at the device's 46 ms chunks: anything queued here is added latency
       hub   <- Hub.sliding[Chunk[Byte]](256)
       proc  <- ZIO.acquireRelease(startEncoder(cfg.synth.bitrateKbps))(p => ZIO.succeed(p.destroy()))
       _     <- writer(pcm, proc.getOutputStream).forkScoped

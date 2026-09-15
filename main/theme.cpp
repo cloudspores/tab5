@@ -152,4 +152,13 @@ void dial_set(Dial *d, int value)
 int dial_value(Dial *d) { return (int)lv_arc_get_value(d->arc); }
 void dial_caption(Dial *d, const char *text) { lv_label_set_text(d->lbl, text); }
 
+void keycap_accent(lv_obj_t *k, bool on)
+{
+    lv_obj_set_style_bg_color(k, lv_color_hex(on ? ORANGE : PANEL), 0);
+    lv_obj_set_style_bg_color(k, lv_color_hex(on ? 0xc8420f : LIGHT), LV_STATE_PRESSED);
+    lv_obj_set_style_border_color(k, lv_color_hex(on ? ORANGE : LIGHT), 0);
+    lv_obj_set_style_text_color(lv_obj_get_child(k, 0), lv_color_hex(on ? 0xffffff : INK), 0);
+}
+void keycap_text(lv_obj_t *k, const char *text) { lv_label_set_text(lv_obj_get_child(k, 0), text); }
+
 }

@@ -31,5 +31,9 @@ void next();
 const char *current();
 /** Short state for the OUT module: "TAB5 HP", "SONOS Kitchen", "CONNECTING", ... */
 const char *status();
+/** Set the selected room's volume (no effect on the local output); applied by the worker. */
+void set_volume(int percent);
+/** Counter bumped whenever the output list or selection changes; the UI polls it. */
+int changed_count();
 
 }

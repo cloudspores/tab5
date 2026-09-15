@@ -49,16 +49,6 @@ void dial_cb(Dial *d, int v, bool released)
     dial_h(d == d_rate ? synth_play_ui::DIAL_RATE : d == d_gate ? synth_play_ui::DIAL_GATE : synth_play_ui::DIAL_TEMPO, v, released);
 }
 
-/** A toggle keycap shows its state in the accent colour. */
-void set_accent(lv_obj_t *k, bool on)
-{
-    lv_obj_set_style_bg_color(k, lv_color_hex(on ? ORANGE : PANEL), 0);
-    lv_obj_set_style_border_color(k, lv_color_hex(on ? ORANGE : LIGHT), 0);
-    lv_obj_set_style_text_color(lv_obj_get_child(k, 0), lv_color_hex(on ? 0xffffff : INK), 0);
-}
-
-void set_key_text(lv_obj_t *k, const char *t) { lv_label_set_text(lv_obj_get_child(k, 0), t); }
-
 void paint_pad(int i, bool on)
 {
     lv_obj_set_style_bg_color(pad[i], lv_color_hex(on ? ORANGE : DISC), 0);
@@ -103,15 +93,15 @@ void refresh_locked()
     for (char *c = cap; *c; c++) if (*c >= 'a' && *c <= 'z') *c -= 32;
     lv_label_set_text(lbl_chords_cap, cap);
     // toggles
-    set_accent(k_latch, perf::latch());
-    char v[16]; snprintf(v, sizeof v, "VOICING %d", perf::voicing()); set_key_text(k_voicing, v);
-    set_accent(k_spread, perf::spread());
-    for (int i = 0; i < 4; i++) set_accent(k_arp[i], perf::arp() == (perf::Arp)i);
+    keycap_accent(k_latch, perf::latch());
+    char v[16]; snprintf(v, sizeof v, "VOICING %d", perf::voicing()); keycap_text(k_voicing, v);
+    keycap_accent(k_spread, perf::spread());
+    for (int i = 0; i < 4; i++) keycap_accent(k_arp[i], perf::arp() == (perf::Arp)i);
     // scale
     lv_label_set_text(lbl_scale, perf::scale_name());
     char m[16]; snprintf(m, sizeof m, "%s", perf::mode_name(perf::mode())); for (char *c = m; *c; c++) if (*c >= 'a' && *c <= 'z') *c -= 32;
-    set_key_text(k_mode, m);
-    set_accent(k_lock, perf::scale_lock());
+    keycap_text(k_mode, m);
+    keycap_accent(k_lock, perf::scale_lock());
     // dials
     char t[24];
     dial_set(d_rate, perf::rate());  snprintf(t, sizeof t, "RATE %s", perf::rate_name(perf::rate())); dial_caption(d_rate, t);

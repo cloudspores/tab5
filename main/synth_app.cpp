@@ -227,13 +227,33 @@ void on_key(synth_ui::Key k)
     case synth_ui::KEY_RANDOM: random_voice(); break;
     case synth_ui::KEY_PANIC:  perf::all_off(); break;
     case synth_ui::KEY_PLAY:   show_page(PAGE_PLAY); break;
-    case synth_ui::KEY_OUT:    synth_relay::next(); break;
     case synth_ui::KEY_OCT_DOWN: if (octave_base > 24) set_octave(octave_base - 12); break;
     case synth_ui::KEY_OCT_UP:   if (octave_base < 84) set_octave(octave_base + 12); break;
     case synth_ui::KEY_FAV: case synth_ui::KEY_EXPERT: break;   // later milestones
     }
 }
 void on_note(int note, bool on) { if (on) perf::key_down(note); else perf::key_up(note); }
+void on_output(int index)
+{
+    const auto &outs = synth_relay::outputs();
+    if (index >= 0 && index < (int)outs.size()) synth_relay::select(outs[index].c_str());
+}
+/** The VOL dial: the Tab5's own level (shared with the radio) or, while relaying, the room's volume. */
+void on_volume(int v, bool released)
+{
+    stream::set_volume(v);
+    if (released) { settings::set_int("vol", v); synth_relay::set_volume(v); }
+}
+
+/** Mirror the relay's output list and selection into the radio buttons. */
+void show_outputs()
+{
+    const auto &outs = synth_relay::outputs();
+    const char *names[synth_ui::MAX_OUTPUTS]; int n = 0, sel = 0;
+    for (size_t i = 0; i < outs.size() && n < synth_ui::MAX_OUTPUTS; i++) { if (outs[i] == synth_relay::current()) sel = n; names[n++] = outs[i].c_str(); }
+    synth_ui::set_outputs(names, n, sel);
+    topbar::set_output(synth_relay::current());
+}
 void on_macro(synth_ui::Macro m, int value, bool) { macro[m] = value; apply_macros(); }
 
 void on_play_key(synth_play_ui::Key k)
@@ -273,10 +293,10 @@ void on_play_dial(synth_play_ui::DialId d, int v, bool released)
 TaskHandle_t meter_task_h = nullptr; volatile bool active = false;
 void meter_task(void *)
 {
-    const char *shown = nullptr;
+    int shown = -1;
     while (active) {
         synth_ui::set_meter(synth::last_peak(), synth::active_voices(), synth_relay::status());
-        if (shown != synth_relay::current()) { shown = synth_relay::current(); topbar::set_output(shown); }
+        if (shown != synth_relay::changed_count()) { shown = synth_relay::changed_count(); show_outputs(); }
         vTaskDelay(pdMS_TO_TICKS(66));
     }
     meter_task_h = nullptr; vTaskDelete(nullptr);
@@ -294,6 +314,7 @@ void on_enter()
     synth_play_ui::refresh();
     synth_relay::start();                             // restores a Sonos output if one was chosen
     synth_relay::discover();
+    synth_ui::set_volume(stream::volume_percent());
     active = true;
     if (!meter_task_h) xTaskCreatePinnedToCore(meter_task, "synth_meter", 4 * 1024, nullptr, 3, &meter_task_h, 0);
 }
@@ -317,6 +338,7 @@ namespace synth_app_ns {
 void register_console()
 {
     synth_ui::on_key(on_key); synth_ui::on_note(on_note); synth_ui::on_macro(on_macro);
+    synth_ui::on_output(on_output); synth_ui::on_volume(on_volume);
     synth_play_ui::on_key(on_play_key); synth_play_ui::on_pad(on_pad); synth_play_ui::on_note(on_note); synth_play_ui::on_dial(on_play_dial);
     perf::on_change(on_perf_change);
     console::add("note",   [](const char *a, int v) { if (strstr(a, "off")) perf::key_up(v); else perf::key_down(v); }, "note N [off]: press/release a key (scale lock and arp apply)");
@@ -327,6 +349,7 @@ void register_console()
     console::add("relay",  [](const char *a, int) {
         if (!*a || !strcmp(a, "off")) synth_relay::select(synth_relay::LOCAL); else synth_relay::select(a);
         ESP_LOGI(TAG, "output -> %s", synth_relay::current()); }, "relay ROOM|off: send the synth to a Sonos room");
+    console::add("svol",   [](const char *, int v) { on_volume(v, true); synth_ui::set_volume(v); }, "svol 0-100: synth volume (local or room)");
     console::add("outputs", [](const char *, int) { for (auto &o : synth_relay::outputs()) ESP_LOGI(TAG, "  %s%s", o.c_str(), o == synth_relay::current() ? "  <- current" : ""); }, "list synth outputs");
     console::add("page",   [](const char *a, int) { show_page(strcmp(a, "play") == 0 ? PAGE_PLAY : PAGE_SOUND); }, "page sound|play: switch the synth page");
     console::add("pad",    [](const char *a, int v) { if (strstr(a, "off")) perf::pad_up(v - 1); else perf::pad_down(v - 1); }, "pad N [off]: press/release chord pad 1-7");

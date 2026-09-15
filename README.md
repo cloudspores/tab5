@@ -56,11 +56,14 @@ to the keyboard. Console: `open synth`, `page sound|play`, `note N [off]`, `voic
 `macro M V`, `pad N [off]`, `arp off|up|down|rnd`, `tempo`, `rate`, `gate`, `scale ROOT [MODE]`,
 `latch`, `lock`, `chords`, `panic`, `peak`, `dump`.
 
-The OUT key in the OUT module (or `relay ROOM`) sends the synth to a Sonos room: the device streams
+The OUT module on the Sound page lists the outputs as radio buttons (TAB5, then the Sonos rooms the
+bridge finds) next to a VOL dial that sets the Tab5 level or, while relaying, the room's volume.
+Choosing a room (or `relay ROOM`) sends the synth to Sonos: the device streams
 its rendered audio to the bridge over a WebSocket, ffmpeg in the bridge container encodes it to a
 192 kbps MP3 radio stream, and the room is pointed at `http://<bridge>:8765/synth/stream.mp3`. The
 Tab5's own speaker is muted meanwhile and the room is released when you switch back or leave the
-app. Sonos buffers a second or two of any stream, so the room lags the keys: it suits latched chords,
+app. Sonos buffers a second or two of any stream, so the room lags the keys (the device and bridge add
+under half a second and drop audio rather than queue it): it suits latched chords,
 the arpeggiator and, later, the sequencer; the local speaker stays the low-latency output.
 
 ## Updates

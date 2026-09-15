@@ -41,8 +41,9 @@ constexpr int BLOCK = 256;                 ///< mono samples per render; 5.8 ms 
 SemaphoreHandle_t midi_mtx = nullptr;      ///< the ring has one reader but several writers (UI, arp timer, console)
 
 // Relay tap: a copy of the rendered stereo blocks for the Sonos relay task. One producer
-// (the render task) and one consumer (the relay task), so head/tail need no lock; a full
-// ring drops the newest block rather than stalling audio.
+// (the render task) and one consumer (the relay task). When the consumer falls behind (a
+// WiFi stall) the oldest audio is discarded: the relay skips rather than lagging further,
+// since anything queued here becomes permanent latency at the Sonos end.
 constexpr int TAP_BYTES = 64 * 1024;       ///< ~370 ms of 44.1 kHz stereo
 uint8_t *tap = nullptr;
 volatile int tap_head = 0, tap_tail = 0;
@@ -53,7 +54,7 @@ void tap_write(const uint8_t *b, int n)
 {
     int head = tap_head, tail = tap_tail;
     int space = (tail - head - 1 + TAP_BYTES) % TAP_BYTES;
-    if (n > space) return;
+    if (n > space) tap_tail = (tail + (n - space)) % TAP_BYTES;    // consumer is behind: skip the oldest bytes
     int first = TAP_BYTES - head; if (first > n) first = n;
     memcpy(tap + head, b, first);
     if (n > first) memcpy(tap, b + first, n - first);
@@ -158,6 +159,7 @@ void stop()
 bool running() { return run; }
 
 void set_relay(bool on) { if (on && !tap_on) { tap_head = 0; tap_tail = 0; } tap_on = on; }
+void relay_flush() { tap_tail = tap_head; }
 bool relay() { return tap_on; }
 int  relay_read(uint8_t *out, int max)
 {

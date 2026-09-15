@@ -47,6 +47,8 @@ void set_relay(bool on);
 bool relay();
 /** Take up to `max` bytes of 16-bit stereo PCM from the tap (single consumer). */
 int  relay_read(uint8_t *out, int max);
+/** Discard whatever is queued in the tap (on connect, so old audio does not become lag). */
+void relay_flush();
 /** Mute the Tab5's own speaker (used while the sound goes to Sonos); remembered across restarts of the engine. */
 void set_local_mute(bool on);
 
