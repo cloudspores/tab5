@@ -24,7 +24,8 @@ bool running();
 
 void note_on(int midi_note, int velocity);
 void note_off(int midi_note);
-void all_notes_off();
+void all_notes_off();                     ///< release every note through its envelope
+void all_sound_off();                     ///< silence every voice immediately (panic)
 void controller(int cc, int value);       ///< MIDI CC (1 = mod wheel, 64 = sustain, ...)
 
 /** Load a 32-voice packed bank; returns false if the size is wrong. */

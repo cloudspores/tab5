@@ -169,6 +169,16 @@ int SynthUnit::ProcessMidiMessage(const uint8_t *buf, int buf_size) {
         filter_control_[1] = value * 528416;
       } else if (controller == 3) {
         filter_control_[2] = value * 528416;
+      } else if (controller == 120 || controller == 123) {
+        // tab5: All Sound Off (120) silences every voice at once; All Notes Off (123)
+        // releases them through their envelopes. Both clear sustain.
+        sustain_ = false;
+        for (int note = 0; note < max_active_notes; note++) {
+          if (active_note_[note].keydown || active_note_[note].sustained) active_note_[note].dx7_note->keyup();
+          active_note_[note].keydown = false;
+          active_note_[note].sustained = false;
+          if (controller == 120) active_note_[note].live = false;
+        }
       } else if (controller == 64) {
         sustain_ = value != 0;
         if (!sustain_) {

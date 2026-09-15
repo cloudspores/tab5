@@ -193,7 +193,8 @@ void set_local_mute(bool on)
 void note_on(int note, int vel) { uint8_t m[3] = {0x90, (uint8_t)(note & 0x7f), (uint8_t)(vel & 0x7f)}; midi(m, 3); }
 void note_off(int note)         { uint8_t m[3] = {0x80, (uint8_t)(note & 0x7f), 0}; midi(m, 3); }
 void controller(int cc, int v)  { uint8_t m[3] = {0xb0, (uint8_t)(cc & 0x7f), (uint8_t)(v & 0x7f)}; midi(m, 3); }
-void all_notes_off()            { for (int n = 0; n < 128; n++) note_off(n); }
+void all_notes_off()            { controller(123, 0); }
+void all_sound_off()            { controller(120, 0); }
 
 bool load_bank(const uint8_t *packed, size_t len)
 {

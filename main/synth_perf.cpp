@@ -350,7 +350,7 @@ void all_off()
     arp_note_off();
     silence_direct();
     n_held = 0; n_chord = 0; s_pad = -1; memset(key_map, 0, sizeof key_map);
-    synth::all_notes_off();
+    synth::all_sound_off();                                   // panic: cut the tails too
     unlock();
     changed();
 }
