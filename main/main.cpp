@@ -26,11 +26,9 @@
 #include "radio_app.h"
 #include "settings_app.h"
 #include "translate_app.h"
+#include "synth_app.h"
 
 static const char *TAG = "main";
-
-/** Placeholder card until the synth lands; the launcher ignores apps without a screen. */
-static const App synth_app_placeholder = { "synth", "fm synth", "Six-operator synth, sequencer, songs (coming next)", LV_SYMBOL_LOOP, nullptr, nullptr, nullptr, nullptr };
 
 /** A USB reset does not power-cycle the panel; cycling the LCD and touch rails makes the BSP's probe reliable. */
 static void power_cycle_panel()
@@ -109,7 +107,7 @@ extern "C" void app_main(void)
 
     launcher::add(&radio_app);
     launcher::add(&translate_app);
-    launcher::add(&synth_app_placeholder);
+    launcher::add(&synth_app);
     launcher::add(&settings_app);
     launcher::init();
 
@@ -117,6 +115,7 @@ extern "C" void app_main(void)
     console::start();
     register_console();
     translate::register_console();
+    synth_app_ns::register_console();
 
     // Show the last-used screen before the network is up so the device feels instant.
     char last_app[16] = "radio";

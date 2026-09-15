@@ -59,7 +59,7 @@ void add(const char *verb, Handler h, const char *helptext)
 void start()
 {
     add("help", help, "list commands");
-    xTaskCreatePinnedToCore(task, "console", 6 * 1024, nullptr, 3, nullptr, 0);
+    xTaskCreatePinnedToCore(task, "console", 12 * 1024, nullptr, 3, nullptr, 0);   // verbs run app enter/exit hooks (SD mount, LVGL)
 }
 
 }

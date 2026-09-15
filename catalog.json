@@ -3,9 +3,9 @@
   "device": "m5stack-tab5",
   "firmware": {
     "name": "Tab5 Radio",
-    "version": "0.3.0",
-    "url": "https://github.com/cloudspores/tab5/releases/download/v0.3.0/tab5_radio.bin",
-    "notes": "Live Spanish/English translator app; radio yields the codec to other apps."
+    "version": "0.4.0",
+    "url": "https://github.com/cloudspores/tab5/releases/download/v0.4.0/tab5_radio.bin",
+    "notes": "FM synth app: six-operator engine, 32 factory voices, macro dials, touch keyboard."
   },
   "packs": []
 }

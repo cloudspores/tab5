@@ -35,6 +35,18 @@ top panel (FLIP turns it toward the person opposite) and everything in English o
 toggles spoken replies. The microphone is muted while a reply plays. Measured on the bench: about
 0.7 s from the end of a phrase to the translation. Console: `open translate`, `listen on|off`, `flip`.
 
+## Synth app
+
+A six-operator FM synthesizer in the DX7 lineage, built on the vendored `msfa` engine (Google's
+"music synthesizer for android", Apache-2.0) rendering 44.1 kHz on core 1. The Sound screen shows
+the voice (name, index, algorithm, feedback), four macro dials that reshape the voice without the
+DX7's 155 parameters (BRIGHT scales the modulators, ATTACK and RELEASE bend the envelopes, MOTION
+adds vibrato and tremolo), RANDOM for a fresh voice, PANIC, an output meter and a two-octave touch
+keyboard with octave shift. Thirty-two factory voices ship in `main/synth_bank.cpp`, written as
+readable parameter tables; DX7 `.syx` banks (4104-byte bulk dumps) in `/tab5/synth/` on the microSD
+card are loaded on entry. The radio releases the codec while the synth runs and resumes afterwards.
+Console: `open synth`, `note N [off]`, `voice N`, `random`, `macro M V`, `panic`, `peak`, `dump`.
+
 ## Updates
 
 Settings → FIRMWARE → CHECK reads `catalog.json` from this repository and offers INSTALL when it
@@ -83,6 +95,10 @@ step is compiled out, which is fine on a board whose C6 is already updated).
 | `main/bridge.*` | client for the Mac bridge (Sonos rooms, handoff, volume, state) |
 | `main/settings_app.*`, `update.*` | settings screen; firmware update from the GitHub catalogue |
 | `main/translate_app.*` | live translation: microphone streaming, bridge events, spoken replies |
+| `main/synth_engine.*` | FM engine wrapper: render task, MIDI ring, bank loading, voice access |
+| `main/synth_app.*`, `synth_ui.*`, `synth_bank.*` | synth logic and macros, Sound screen, factory voices |
+| `main/lv_mem_psram.cpp` | LVGL allocator backend that keeps widgets in PSRAM |
+| `components/msfa/` | vendored FM synthesis core (Apache-2.0), see its README for local changes |
 | `main/c6_update.*` | one-time OTA of the C6 co-processor firmware over the hosted link |
 | `main/fonts/` | Familjen Grotesk and JetBrains Mono converted for LVGL (OFL) |
 | `main/secrets.h` | WiFi credentials and bridge address (gitignored; copy from `secrets.h.example`) |
@@ -119,3 +135,8 @@ The C6 keeps hosted 2.12.0 after this project ran once; the stock UIFlow2 firmwa
 - Software rotation of a 1280x720 frame pegs a core; enable `CONFIG_LVGL_PORT_ENABLE_PPA`.
 - The C6 shipped with esp-hosted 1.4.1; it is updated to 2.12.0 at first boot by `c6_update.cpp`.
 - ESP-IDF's HTTP client exposes response headers only through the event callback.
+- Internal SRAM is the scarce resource. LVGL's small objects and the synth engine live in PSRAM
+  (`lv_mem_psram.cpp`, `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096`); before that the codec could not
+  even allocate its I2S DMA descriptors when the synth was the boot screen.
+- msfa's resonant filter costs a 4x4 float matrix per sample and stalls the render task; it is
+  bypassed. The engine also has no `nanosleep`, and a `SynthUnit` only carries one built-in voice.

@@ -281,6 +281,7 @@ void player_task(void *)
         for (int i = 0; i < 30 && alive(p); i++) vTaskDelay(pdMS_TO_TICKS(100));
     }
     free(chunk); free(p.in); free(p.out);
+    ESP_LOGI(TAG, "player task exit");
     task = nullptr;
     vTaskDelete(nullptr);
 }
@@ -309,7 +310,13 @@ void play(const Station &s)
 void stop()
 {
     generation = generation + 1;
-    for (int i = 0; i < 100 && task; i++) vTaskDelay(pdMS_TO_TICKS(20));
+    // Wait for the player task to exit. It owns the codec handle while it runs, so
+    // callers (the synth, for one) may only reopen the codec once this returns.
+    // A blocked HTTP read can hold the task for its socket timeout, hence the bound.
+    int i = 0;
+    for (; i < 400 && task; i++) vTaskDelay(pdMS_TO_TICKS(20));
+    if (task) ESP_LOGW(TAG, "player task still running after stop()");
+    else if (i) ESP_LOGI(TAG, "player stopped after %d ms", i * 20);
 }
 
 bool playing() { return is_playing; }
