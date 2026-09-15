@@ -1,8 +1,12 @@
 # Tab5 Internet Radio
 
 Internet radio firmware for the M5Stack Tab5 (ESP32-P4 + ESP32-C6), written in C++ on ESP-IDF v6.1.
-UI direction: instrument panel (numbered modules, one orange accent). Mockup:
-https://claude.ai/code/artifact/8ea29e09-ca1e-427d-acb4-8b179b471b47
+UI direction: instrument panel (numbered modules, one orange accent). 
+
+Mockup:
+
+<img width="1772" height="996" alt="Screenshot 2026-09-14 at 9 36 47 PM" src="https://github.com/user-attachments/assets/da4e43cf-1899-4108-ad70-8be4543eb39f" />
+
 
 ## Status
 
