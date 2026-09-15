@@ -27,9 +27,10 @@ void keycap_text(lv_obj_t *keycap, const char *text);
 
 /** A rotary dial: light disc, orange pointer, touch arc underneath, mono caption below. */
 struct Dial {
-    lv_obj_t *arc, *ptr, *lbl, *disc;
+    lv_obj_t *touch, *ptr, *lbl, *disc;
     lv_point_precise_t pts[2];   ///< pointer line end points (the line object references them)
     int cx, cy;
+    int value, min, max;
     const char *caption;
     void (*on_change)(Dial *, int value, bool released);   ///< value while dragging; released = finger up
 };
