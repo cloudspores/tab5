@@ -42,6 +42,14 @@ int feedback();
 void get_voice(uint8_t out[VOICE_PARAMS]);
 void set_voice(const uint8_t in[VOICE_PARAMS]);
 
+/** Relay tap: when on, every rendered stereo block is also queued for relay_read(). */
+void set_relay(bool on);
+bool relay();
+/** Take up to `max` bytes of 16-bit stereo PCM from the tap (single consumer). */
+int  relay_read(uint8_t *out, int max);
+/** Mute the Tab5's own speaker (used while the sound goes to Sonos); remembered across restarts of the engine. */
+void set_local_mute(bool on);
+
 /** Peak of the last rendered block, 0..32767, for the meter. */
 int  last_peak();
 /** Diagnostics: blocks rendered, MIDI bytes queued, bytes still unread by the engine. */

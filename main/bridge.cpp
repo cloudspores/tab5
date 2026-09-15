@@ -137,6 +137,16 @@ bool sonos_play_url(const char *room, const char *url, const char *title)
     return ok;
 }
 
+bool synth_relay(const char *room)
+{
+    char r[96], body[160];
+    json_escape(room, r, sizeof r);
+    snprintf(body, sizeof body, "{\"room\":\"%s\"}", r);
+    std::string resp;
+    bool ok = request("POST", "/synth/sonos", body, resp);
+    ESP_LOGI(TAG, "synth relay: %s", resp.c_str());
+    return ok;
+}
 bool sonos_stop(const char *room)
 {
     char r[96], body[160];

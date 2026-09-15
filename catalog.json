@@ -3,9 +3,9 @@
   "device": "m5stack-tab5",
   "firmware": {
     "name": "Tab5 Radio",
-    "version": "0.5.0",
-    "url": "https://github.com/cloudspores/tab5/releases/download/v0.5.0/tab5_radio.bin",
-    "notes": "Synth PLAY page: chord pads, latch, arpeggiator, scale lock."
+    "version": "0.6.0",
+    "url": "https://github.com/cloudspores/tab5/releases/download/v0.6.0/tab5_radio.bin",
+    "notes": "Synth to Sonos relay via the bridge; PLAY page with chords, arpeggiator, scale lock."
   },
   "packs": []
 }

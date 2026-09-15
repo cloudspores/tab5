@@ -17,8 +17,11 @@ final case class SpeechConfig(whisperUrl: String, piperBin: String, voiceDir: St
 /** Live translator: the fast model used for phrases and the segmentation tunables. */
 final case class TranslatorConfig(model: String, live: LiveConfig)
 
+/** Synth relay: the address Sonos fetches the stream from (empty = detect) and the MP3 bitrate. */
+final case class SynthConfig(publicHost: String, bitrateKbps: Int)
+
 /** Whole-service configuration, loaded from application.conf with environment overrides. */
-final case class BridgeConfig(port: Int, ollama: OllamaConfig, sonos: SonosConfig, speech: SpeechConfig, translator: TranslatorConfig)
+final case class BridgeConfig(port: Int, ollama: OllamaConfig, sonos: SonosConfig, speech: SpeechConfig, translator: TranslatorConfig, synth: SynthConfig)
 
 object BridgeConfig:
   private val descriptor: Config[BridgeConfig] = deriveConfig[BridgeConfig].mapKey(toKebabCase)

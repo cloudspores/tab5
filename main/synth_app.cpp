@@ -19,6 +19,8 @@
 #include "synth_play_ui.h"
 #include "synth_perf.h"
 #include "synth_keys.h"
+#include "synth_relay.h"
+#include "topbar.h"
 #include "console.h"
 #include "stream.h"
 #include "launcher.h"
@@ -225,6 +227,7 @@ void on_key(synth_ui::Key k)
     case synth_ui::KEY_RANDOM: random_voice(); break;
     case synth_ui::KEY_PANIC:  perf::all_off(); break;
     case synth_ui::KEY_PLAY:   show_page(PAGE_PLAY); break;
+    case synth_ui::KEY_OUT:    synth_relay::next(); break;
     case synth_ui::KEY_OCT_DOWN: if (octave_base > 24) set_octave(octave_base - 12); break;
     case synth_ui::KEY_OCT_UP:   if (octave_base < 84) set_octave(octave_base + 12); break;
     case synth_ui::KEY_FAV: case synth_ui::KEY_EXPERT: break;   // later milestones
@@ -270,7 +273,12 @@ void on_play_dial(synth_play_ui::DialId d, int v, bool released)
 TaskHandle_t meter_task_h = nullptr; volatile bool active = false;
 void meter_task(void *)
 {
-    while (active) { synth_ui::set_meter(synth::last_peak(), synth::active_voices()); vTaskDelay(pdMS_TO_TICKS(66)); }
+    const char *shown = nullptr;
+    while (active) {
+        synth_ui::set_meter(synth::last_peak(), synth::active_voices(), synth_relay::status());
+        if (shown != synth_relay::current()) { shown = synth_relay::current(); topbar::set_output(shown); }
+        vTaskDelay(pdMS_TO_TICKS(66));
+    }
     meter_task_h = nullptr; vTaskDelete(nullptr);
 }
 
@@ -284,6 +292,8 @@ void on_enter()
     choose_voice(voice_idx);
     set_octave(octave_base);
     synth_play_ui::refresh();
+    synth_relay::start();                             // restores a Sonos output if one was chosen
+    synth_relay::discover();
     active = true;
     if (!meter_task_h) xTaskCreatePinnedToCore(meter_task, "synth_meter", 4 * 1024, nullptr, 3, &meter_task_h, 0);
 }
@@ -293,6 +303,7 @@ void on_exit()
     perf::all_off();
     active = false;
     for (int i = 0; i < 30 && meter_task_h; i++) vTaskDelay(pdMS_TO_TICKS(10));
+    synth_relay::stop();                              // hands the Sonos room back
     synth::stop();
 }
 
@@ -313,6 +324,10 @@ void register_console()
     console::add("random", [](const char *, int) { random_voice(); }, "random voice");
     console::add("macro",  [](const char *a, int m) { const char *sp = strchr(a, ' '); if (sp) { macro[m & 3] = atoi(sp + 1); apply_macros(); show_patch(); } }, "macro I V: set dial I (0-3) to V (0-100)");
     console::add("panic",  [](const char *, int) { perf::all_off(); }, "all notes off");
+    console::add("relay",  [](const char *a, int) {
+        if (!*a || !strcmp(a, "off")) synth_relay::select(synth_relay::LOCAL); else synth_relay::select(a);
+        ESP_LOGI(TAG, "output -> %s", synth_relay::current()); }, "relay ROOM|off: send the synth to a Sonos room");
+    console::add("outputs", [](const char *, int) { for (auto &o : synth_relay::outputs()) ESP_LOGI(TAG, "  %s%s", o.c_str(), o == synth_relay::current() ? "  <- current" : ""); }, "list synth outputs");
     console::add("page",   [](const char *a, int) { show_page(strcmp(a, "play") == 0 ? PAGE_PLAY : PAGE_SOUND); }, "page sound|play: switch the synth page");
     console::add("pad",    [](const char *a, int v) { if (strstr(a, "off")) perf::pad_up(v - 1); else perf::pad_down(v - 1); }, "pad N [off]: press/release chord pad 1-7");
     console::add("arp",    [](const char *a, int) {

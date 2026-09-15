@@ -11,6 +11,7 @@ final case class Volume(room: String, volume: Option[Int] = None, delta: Option[
 final case class Ask(question: String, system: Option[String] = None) derives JsonDecoder
 final case class Translate(text: String, from: String = "auto", to: String = "en") derives JsonDecoder
 final case class Speak(text: String, language: String = "en") derives JsonDecoder
+final case class RelayTo(room: String) derives JsonDecoder
 final case class Transcript(text: String) derives JsonEncoder
 
 final case class Result(result: String) derives JsonEncoder
@@ -54,8 +55,30 @@ object Api:
       yield ()
     }
 
-  def routes(cfg: BridgeConfig): Routes[Sonos & Ollama & Speech, Response] = Routes(
+  /** The Tab5 synth's audio arrives here as binary PCM frames; see SynthRelay. */
+  private val synthSocket: WebSocketApp[SynthRelay] =
+    Handler.webSocket { channel =>
+      channel.receiveAll {
+        case ChannelEvent.Read(WebSocketFrame.Binary(bytes)) => SynthRelay.push(bytes)
+        case _                                                => ZIO.unit
+      }
+    }
+
+  def routes(cfg: BridgeConfig): Routes[Sonos & Ollama & Speech & SynthRelay, Response] = Routes(
     Method.GET / "translate" / "live" -> handler(liveSocket(cfg).toResponse),
+
+    // synth relay: device audio in, MP3 out, and a helper that points a room at the stream
+    Method.GET / "synth" / "in" -> handler(synthSocket.toResponse),
+    Method.GET / "synth" / "stream.mp3" -> handler {
+      SynthRelay.stream.map(s => Response(body = Body.fromStreamChunked(s), headers = Headers(Header.ContentType(MediaType.audio.mpeg), Header.CacheControl.NoCache)))
+    },
+    Method.POST / "synth" / "sonos" -> handler { (req: Request) =>
+      for
+        r   <- body[RelayTo](req)
+        url <- SynthRelay.streamUrl
+        msg <- orError(Sonos.playUrl(r.room, url, "Tab5 Synth"))
+      yield Response.json(Result(msg).toJson)
+    },
 
     Method.GET / "health" -> handler {
       Response.json(Health(true, "tab5-bridge", BridgeVersion.current, cfg.ollama.model).toJson)

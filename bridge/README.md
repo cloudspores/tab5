@@ -69,3 +69,12 @@ that first load cancels it, so warm it with one `/translate` call after a restar
 ## Next
 
 Spotify profile pull and a vision endpoint for the Tab5's camera.
+
+## Synth relay
+
+- `GET /synth/in` (WebSocket): the Tab5 sends 44.1 kHz 16-bit stereo PCM as binary frames.
+- `GET /synth/stream.mp3`: live MP3 (192 kbps, ffmpeg) of that audio; silence when nothing arrives.
+- `POST /synth/sonos {room}`: point a room at the stream as an internet radio station.
+
+The stream URL uses the interface facing the Sonos subnet, or `TAB5_PUBLIC_HOST` when set. The
+container installs ffmpeg for the encoder.

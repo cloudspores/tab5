@@ -56,6 +56,13 @@ to the keyboard. Console: `open synth`, `page sound|play`, `note N [off]`, `voic
 `macro M V`, `pad N [off]`, `arp off|up|down|rnd`, `tempo`, `rate`, `gate`, `scale ROOT [MODE]`,
 `latch`, `lock`, `chords`, `panic`, `peak`, `dump`.
 
+The OUT key in the OUT module (or `relay ROOM`) sends the synth to a Sonos room: the device streams
+its rendered audio to the bridge over a WebSocket, ffmpeg in the bridge container encodes it to a
+192 kbps MP3 radio stream, and the room is pointed at `http://<bridge>:8765/synth/stream.mp3`. The
+Tab5's own speaker is muted meanwhile and the room is released when you switch back or leave the
+app. Sonos buffers a second or two of any stream, so the room lags the keys: it suits latched chords,
+the arpeggiator and, later, the sequencer; the local speaker stays the low-latency output.
+
 ## Updates
 
 Settings → FIRMWARE → CHECK reads `catalog.json` from this repository and offers INSTALL when it
@@ -107,6 +114,7 @@ step is compiled out, which is fine on a board whose C6 is already updated).
 | `main/synth_engine.*` | FM engine wrapper: render task, MIDI ring, bank loading, voice access |
 | `main/synth_app.*`, `synth_ui.*`, `synth_bank.*` | synth logic and macros, Sound page, factory voices |
 | `main/synth_perf.*`, `synth_play_ui.*`, `synth_keys.*` | scale lock, chord pads, arpeggiator; Play page; shared keyboard widget |
+| `main/synth_relay.*` | streams the synth to the bridge and selects the Sonos room |
 | `main/lv_mem_psram.cpp` | LVGL allocator backend that keeps widgets in PSRAM |
 | `components/msfa/` | vendored FM synthesis core (Apache-2.0), see its README for local changes |
 | `main/c6_update.*` | one-time OTA of the C6 co-processor firmware over the hosted link |

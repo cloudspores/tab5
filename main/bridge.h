@@ -11,6 +11,7 @@ bool reachable();
 bool sonos_rooms(std::vector<std::string> &names);
 bool sonos_play_url(const char *room, const char *url, const char *title);
 bool sonos_stop(const char *room);
+bool synth_relay(const char *room);      // point a room at the bridge's live synth stream
 bool sonos_volume(const char *room, int volume);
 bool sonos_now_playing(const char *room, std::string &title, std::string &artist, bool &playing);
 }

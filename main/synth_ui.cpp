@@ -84,6 +84,7 @@ lv_obj_t *init()
     lv_obj_t *po = panel(scr, rx, top + 2 * (rh + GAP), right_w, sound_h - 2 * (rh + GAP));
     module_label(po, "05", "OUT");
     lbl_status = label(po, "TAB5 HP . 0 VOICES", &jbmono_14, MID); lv_obj_align(lbl_status, LV_ALIGN_TOP_LEFT, 0, 26);
+    lv_obj_t *ko = keycap(po, "OUT", 52, 28, false, key_cb, (void *)KEY_OUT); lv_obj_align(ko, LV_ALIGN_TOP_RIGHT, 0, -6);
     const int bw = 8, bgap = 4;
     for (int i = 0; i < 30; i++) {
         lv_obj_t *b = lv_obj_create(po);
@@ -130,12 +131,12 @@ void set_octave(int base)
     unlock();
 }
 
-void set_meter(int peak, int voices)
+void set_meter(int peak, int voices, const char *output)
 {
     int lit = peak * 30 / 32767;
     lock();
     for (int i = 0; i < 30; i++) lv_obj_set_style_bg_color(meter_bars[i], lv_color_hex(i < lit ? (i >= 26 ? ORANGE : INK) : LIGHT), 0);
-    lv_label_set_text_fmt(lbl_status, "TAB5 HP . %d VOICES", voices);
+    lv_label_set_text_fmt(lbl_status, "%s . %d VOICES", output, voices);
     unlock();
 }
 

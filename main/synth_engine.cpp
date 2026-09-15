@@ -40,6 +40,26 @@ constexpr int BLOCK = 256;                 ///< mono samples per render; 5.8 ms 
 
 SemaphoreHandle_t midi_mtx = nullptr;      ///< the ring has one reader but several writers (UI, arp timer, console)
 
+// Relay tap: a copy of the rendered stereo blocks for the Sonos relay task. One producer
+// (the render task) and one consumer (the relay task), so head/tail need no lock; a full
+// ring drops the newest block rather than stalling audio.
+constexpr int TAP_BYTES = 64 * 1024;       ///< ~370 ms of 44.1 kHz stereo
+uint8_t *tap = nullptr;
+volatile int tap_head = 0, tap_tail = 0;
+volatile bool tap_on = false;
+bool local_muted = false;
+
+void tap_write(const uint8_t *b, int n)
+{
+    int head = tap_head, tail = tap_tail;
+    int space = (tail - head - 1 + TAP_BYTES) % TAP_BYTES;
+    if (n > space) return;
+    int first = TAP_BYTES - head; if (first > n) first = n;
+    memcpy(tap + head, b, first);
+    if (n > first) memcpy(tap, b + first, n - first);
+    tap_head = (head + n) % TAP_BYTES;
+}
+
 /** Queue a MIDI message for the render task; messages from different tasks never interleave. */
 void midi(const uint8_t *b, int n)
 {
@@ -65,6 +85,7 @@ void render_task(void *)
         }
         peak = pk;
         blocks_rendered++;
+        if (tap_on) tap_write((const uint8_t *)stereo, sizeof stereo);
         // A successful write blocks on the I2S DMA queue and paces the loop. If the
         // codec is not writable (closed underneath us, or a driver error) we must not
         // spin: yield for one block's worth of time so LVGL and the idle task on this
@@ -93,6 +114,7 @@ bool start()
     // The 64 KB MIDI ring and the 13 KB SynthUnit live in PSRAM: internal SRAM is
     // reserved for DMA, task stacks and the network stack. Both are created once.
     if (!midi_mtx) midi_mtx = xSemaphoreCreateMutex();
+    if (!tap) tap = (uint8_t *)heap_caps_malloc(TAP_BYTES, MALLOC_CAP_SPIRAM);
     if (!ring) ring = new (heap_caps_malloc(sizeof(RingBuffer), MALLOC_CAP_SPIRAM)) RingBuffer();
     if (!unit) {
         unit = new (heap_caps_malloc(sizeof(SynthUnit), MALLOC_CAP_SPIRAM)) SynthUnit(ring);
@@ -113,6 +135,9 @@ bool start()
     fs.sample_rate = SAMPLE_RATE;
     if (esp_codec_dev_open(spk, &fs) != 0) { ESP_LOGE(TAG, "speaker open failed"); return false; }
     esp_codec_dev_set_out_vol(spk, stream::volume_percent());
+    // The codec remembers the radio's mute across close/open; the synth always plays audibly
+    // (the radio re-applies its own mute when it reopens the codec).
+    esp_codec_dev_set_out_mute(spk, local_muted);
     spk_open = true;
     run = true;
     xTaskCreatePinnedToCore(render_task, "fm_render", 12 * 1024, nullptr, 20, &render_task_h, 1);
@@ -131,6 +156,25 @@ void stop()
 }
 
 bool running() { return run; }
+
+void set_relay(bool on) { if (on && !tap_on) { tap_head = 0; tap_tail = 0; } tap_on = on; }
+bool relay() { return tap_on; }
+int  relay_read(uint8_t *out, int max)
+{
+    int head = tap_head, tail = tap_tail;
+    int avail = (head - tail + TAP_BYTES) % TAP_BYTES;
+    int n = avail < max ? avail : max;
+    int first = TAP_BYTES - tail; if (first > n) first = n;
+    memcpy(out, tap + tail, first);
+    if (n > first) memcpy(out + first, tap, n - first);
+    tap_tail = (tail + n) % TAP_BYTES;
+    return n;
+}
+void set_local_mute(bool on)
+{
+    local_muted = on;
+    if (spk_open) esp_codec_dev_set_out_mute((esp_codec_dev_handle_t)stream::speaker(), on);
+}
 
 void note_on(int note, int vel) { uint8_t m[3] = {0x90, (uint8_t)(note & 0x7f), (uint8_t)(vel & 0x7f)}; midi(m, 3); }
 void note_off(int note)         { uint8_t m[3] = {0x80, (uint8_t)(note & 0x7f), 0}; midi(m, 3); }

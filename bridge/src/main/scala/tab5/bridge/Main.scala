@@ -20,9 +20,9 @@ object Main extends ZIOAppDefault:
       _   <- ZIO.logInfo(s"tab5-bridge ${BridgeVersion.current} on :${cfg.port}, ollama ${cfg.ollama.url} (${cfg.ollama.model})")
       // Audio uploads (a few seconds of 16 kHz PCM) exceed zio-http's 128 KB default request size.
       server = ZLayer.succeed(Server.Config.default.port(cfg.port).disableRequestStreaming(32 * 1024 * 1024)) >>> Server.live
-      _   <- Server.serve(Api.routes(cfg)).provideSomeLayer[Sonos & Ollama & Speech](server)
+      _   <- Server.serve(Api.routes(cfg)).provideSomeLayer[Sonos & Ollama & Speech & SynthRelay](server)
     yield ()
-    program.provide(BridgeConfig.layer, httpClient, Sonos.live, Ollama.live, Speech.live)
+    program.provide(BridgeConfig.layer, httpClient, Sonos.live, Ollama.live, Speech.live, SynthRelay.live)
 
   /**
    * HTTP client with a long idle timeout: the first call to a large model waits for Ollama to load
