@@ -21,6 +21,7 @@ idf_component_register(
          "radio_app.cpp" "radio_ui.cpp" "stream.cpp" "stations.cpp" "bridge.cpp"
          "settings.cpp" "settings_app.cpp" "update.cpp" "c6_update.cpp" "translate_app.cpp"
          "synth_engine.cpp" "synth_app.cpp" "synth_ui.cpp" "synth_bank.cpp"
+         "synth_perf.cpp" "synth_keys.cpp" "synth_play_ui.cpp"
          "fonts/familjen_bold_52.c" "fonts/familjen_medium_24.c" "fonts/familjen_semibold_18.c" "fonts/familjen_medium_14.c" "fonts/jbmono_14.c" "fonts/jbmono_32.c"
     INCLUDE_DIRS "."
     REQUIRES esp_wifi nvs_flash esp_netif esp_event esp_http_client esp_timer mbedtls lwip esp_driver_usb_serial_jtag esp_https_ota app_update esp_app_format esp_timer msfa

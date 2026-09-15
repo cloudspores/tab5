@@ -3,9 +3,9 @@
   "device": "m5stack-tab5",
   "firmware": {
     "name": "Tab5 Radio",
-    "version": "0.4.0",
-    "url": "https://github.com/cloudspores/tab5/releases/download/v0.4.0/tab5_radio.bin",
-    "notes": "FM synth app: six-operator engine, 32 factory voices, macro dials, touch keyboard."
+    "version": "0.5.0",
+    "url": "https://github.com/cloudspores/tab5/releases/download/v0.5.0/tab5_radio.bin",
+    "notes": "Synth PLAY page: chord pads, latch, arpeggiator, scale lock."
   },
   "packs": []
 }

@@ -15,7 +15,8 @@ static const char *TAG = "console";
 namespace {
 
 struct Cmd { const char *verb; console::Handler h; const char *help; };
-Cmd cmds[32]; int ncmds = 0;
+constexpr int MAX_CMDS = 96;                 ///< every app registers its verbs at boot
+Cmd cmds[MAX_CMDS]; int ncmds = 0;
 
 void help(const char *, int)
 {
@@ -53,7 +54,8 @@ namespace console {
 void add(const char *verb, Handler h, const char *helptext)
 {
     for (int i = 0; i < ncmds; i++) if (!strcmp(cmds[i].verb, verb)) { cmds[i] = {verb, h, helptext}; return; }
-    if (ncmds < 32) cmds[ncmds++] = {verb, h, helptext};
+    if (ncmds < MAX_CMDS) cmds[ncmds++] = {verb, h, helptext};
+    else ESP_LOGE(TAG, "command table full, '%s' not registered", verb);
 }
 
 void start()

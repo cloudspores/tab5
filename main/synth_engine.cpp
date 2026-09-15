@@ -11,6 +11,7 @@
 #include <cstdio>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_codec_dev.h"
@@ -37,7 +38,16 @@ int current = 0;
 
 constexpr int BLOCK = 256;                 ///< mono samples per render; 5.8 ms at 44.1 kHz
 
-void midi(const uint8_t *b, int n) { if (ring) { ring->Write(b, n); midi_bytes_in += n; } }
+SemaphoreHandle_t midi_mtx = nullptr;      ///< the ring has one reader but several writers (UI, arp timer, console)
+
+/** Queue a MIDI message for the render task; messages from different tasks never interleave. */
+void midi(const uint8_t *b, int n)
+{
+    if (!ring) return;
+    xSemaphoreTake(midi_mtx, portMAX_DELAY);
+    ring->Write(b, n); midi_bytes_in += n;
+    xSemaphoreGive(midi_mtx);
+}
 
 /** Render loop: mono int16 from the engine, duplicated to stereo, written to the codec. */
 void render_task(void *)
@@ -82,6 +92,7 @@ bool start()
     if (!tables) { SynthUnit::Init(SAMPLE_RATE); tables = true; }
     // The 64 KB MIDI ring and the 13 KB SynthUnit live in PSRAM: internal SRAM is
     // reserved for DMA, task stacks and the network stack. Both are created once.
+    if (!midi_mtx) midi_mtx = xSemaphoreCreateMutex();
     if (!ring) ring = new (heap_caps_malloc(sizeof(RingBuffer), MALLOC_CAP_SPIRAM)) RingBuffer();
     if (!unit) {
         unit = new (heap_caps_malloc(sizeof(SynthUnit), MALLOC_CAP_SPIRAM)) SynthUnit(ring);

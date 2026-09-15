@@ -4,10 +4,11 @@
  */
 #pragma once
 #include "lvgl.h"
+#include <cstdint>
 
 namespace synth_ui {
 
-enum Key { KEY_PREV, KEY_NEXT, KEY_RANDOM, KEY_FAV, KEY_EXPERT, KEY_OCT_DOWN, KEY_OCT_UP, KEY_PANIC };
+enum Key { KEY_PREV, KEY_NEXT, KEY_RANDOM, KEY_FAV, KEY_EXPERT, KEY_OCT_DOWN, KEY_OCT_UP, KEY_PANIC, KEY_PLAY };
 enum Macro { MACRO_BRIGHT = 0, MACRO_ATTACK, MACRO_RELEASE, MACRO_MOTION };
 
 using KeyHandler   = void (*)(Key k);
@@ -24,5 +25,6 @@ void set_macro(Macro m, int value);
 void set_octave(int base_midi_note);                  // lowest key of the on-screen keyboard
 void set_meter(int peak_0_32767, int voices);
 void set_status(const char *text);
+void highlight(uint32_t sounding_mask);                 // light the keys that sound (bit n = lowest key + n)
 
 }

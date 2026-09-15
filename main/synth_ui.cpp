@@ -1,10 +1,13 @@
 /**
  * @file synth_ui.cpp
  * @brief SOUND screen in the instrument style: 01 SOUND, 02 ALGORITHM, 03 EFFECTS, 04 KEYS, 05 OUT.
+ *
+ * The keyboard widget is shared with the PLAY screen (synth_keys).
  */
 #include "synth_ui.h"
 #include "theme.h"
 #include "topbar.h"
+#include "synth_keys.h"
 #include <cstdio>
 #include <cstring>
 
@@ -14,8 +17,7 @@ using namespace theme;
 lv_obj_t *scr = nullptr;
 lv_obj_t *lbl_name, *lbl_index, *lbl_algo, *lbl_fb, *lbl_status, *lbl_keys_cap, *meter_bars[30];
 Dial *dials[4];
-lv_obj_t *white[14], *black[10];
-int base_note = 48;                                   // C3
+synth_keys::Keyboard *keys;
 synth_ui::KeyHandler key_h; synth_ui::NoteHandler note_h; synth_ui::MacroHandler macro_h;
 
 void key_cb(lv_event_t *e)
@@ -23,53 +25,9 @@ void key_cb(lv_event_t *e)
     if (lv_event_get_code(e) == LV_EVENT_CLICKED && key_h) key_h((synth_ui::Key)(intptr_t)lv_event_get_user_data(e));
 }
 
-/** Piano keys send note on at press and note off at release or when the finger slides away. */
-void note_cb(lv_event_t *e)
-{
-    lv_event_code_t c = lv_event_get_code(e);
-    int semitone = (int)(intptr_t)lv_event_get_user_data(e);
-    if (!note_h) return;
-    if (c == LV_EVENT_PRESSED) note_h(base_note + semitone, true);
-    else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) note_h(base_note + semitone, false);
-}
-
 void dial_cb(Dial *d, int v, bool released)
 {
     for (int i = 0; i < 4; i++) if (dials[i] == d && macro_h) macro_h((synth_ui::Macro)i, v, released);
-}
-
-/** Two octaves: 14 white keys with 10 black keys overlaid, in a panel-wide strip. */
-void build_keyboard(lv_obj_t *parent, int x, int y, int w, int h)
-{
-    static const int white_semi[7] = {0, 2, 4, 5, 7, 9, 11};
-    static const int black_semi[5] = {1, 3, 6, 8, 10};
-    static const int black_pos[5]  = {0, 1, 3, 4, 5};   // after which white key (within an octave)
-    const float wk = (float)w / 14.0f;
-    for (int i = 0; i < 14; i++) {
-        lv_obj_t *k = lv_button_create(parent);
-        lv_obj_set_pos(k, x + (int)(i * wk), y); lv_obj_set_size(k, (int)wk - 3, h);
-        lv_obj_set_style_bg_color(k, lv_color_hex(0xffffff), 0);
-        lv_obj_set_style_bg_color(k, lv_color_hex(ORANGE), LV_STATE_PRESSED);
-        lv_obj_set_style_border_color(k, lv_color_hex(LIGHT), 0);
-        lv_obj_set_style_border_width(k, 1, 0);
-        lv_obj_set_style_radius(k, 6, 0);
-        lv_obj_set_style_shadow_width(k, 0, 0);
-        lv_obj_add_event_cb(k, note_cb, LV_EVENT_ALL, (void *)(intptr_t)(12 * (i / 7) + white_semi[i % 7]));
-        white[i] = k;
-    }
-    for (int o = 0; o < 2; o++)
-        for (int b = 0; b < 5; b++) {
-            lv_obj_t *k = lv_button_create(parent);
-            lv_obj_set_pos(k, x + (int)((o * 7 + black_pos[b] + 1) * wk - wk * 0.3f), y);
-            lv_obj_set_size(k, (int)(wk * 0.6f), (int)(h * 0.6f));
-            lv_obj_set_style_bg_color(k, lv_color_hex(INK), 0);
-            lv_obj_set_style_bg_color(k, lv_color_hex(ORANGE), LV_STATE_PRESSED);
-            lv_obj_set_style_border_width(k, 0, 0);
-            lv_obj_set_style_radius(k, 4, 0);
-            lv_obj_set_style_shadow_width(k, 0, 0);
-            lv_obj_add_event_cb(k, note_cb, LV_EVENT_ALL, (void *)(intptr_t)(12 * o + black_semi[b]));
-            black[o * 5 + b] = k;
-        }
 }
 }
 
@@ -89,18 +47,19 @@ lv_obj_t *init()
     lv_obj_t *p = panel(scr, PAD, top, left_w, sound_h);
     module_label(p, "01", "SOUND");
     lbl_name = label(p, "--", &familjen_bold_52, INK);
-    lv_label_set_long_mode(lbl_name, LV_LABEL_LONG_DOT); lv_obj_set_width(lbl_name, left_w - 36 - 250);
+    lv_label_set_long_mode(lbl_name, LV_LABEL_LONG_DOT); lv_obj_set_width(lbl_name, left_w - 36 - 330);
     lv_obj_align(lbl_name, LV_ALIGN_TOP_LEFT, 0, 30);
     lbl_index = label(p, "", &jbmono_14, MID);
     lv_obj_align(lbl_index, LV_ALIGN_TOP_LEFT, 0, 92);
     lv_obj_t *row = lv_obj_create(p);
     lv_obj_remove_style_all(row);
-    lv_obj_set_size(row, 240, 44); lv_obj_align(row, LV_ALIGN_TOP_RIGHT, 0, 26);
+    lv_obj_set_size(row, 320, 44); lv_obj_align(row, LV_ALIGN_TOP_RIGHT, 0, 26);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW); lv_obj_set_style_pad_column(row, 8, 0);
     keycap(row, LV_SYMBOL_LEFT, 44, 44, false, key_cb, (void *)KEY_PREV);
     keycap(row, LV_SYMBOL_RIGHT, 44, 44, false, key_cb, (void *)KEY_NEXT);
     keycap(row, "RANDOM", 84, 44, true, key_cb, (void *)KEY_RANDOM);
     keycap(row, "PANIC", 56, 44, false, key_cb, (void *)KEY_PANIC);
+    keycap(row, "PLAY " LV_SYMBOL_RIGHT, 68, 44, false, key_cb, (void *)KEY_PLAY);
     for (lv_obj_t *k = lv_obj_get_child(row, 0); k; k = nullptr) {
         lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 0), 0), &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 1), 0), &lv_font_montserrat_14, 0);
@@ -142,7 +101,7 @@ lv_obj_t *init()
     lbl_keys_cap = label(pk, "C3 - B4", &jbmono_14, MID); lv_obj_align(lbl_keys_cap, LV_ALIGN_TOP_RIGHT, -120, 0);
     lv_obj_t *kd = keycap(pk, "OCT -", 52, 24, false, key_cb, (void *)KEY_OCT_DOWN); lv_obj_align(kd, LV_ALIGN_TOP_RIGHT, -56, -4);
     lv_obj_t *ku = keycap(pk, "OCT +", 52, 24, false, key_cb, (void *)KEY_OCT_UP);   lv_obj_align(ku, LV_ALIGN_TOP_RIGHT, 0, -4);
-    build_keyboard(pk, 0, 28, W - 2 * PAD - 36, keys_h - 36 - 28);
+    keys = synth_keys::create(pk, 0, 28, W - 2 * PAD - 36, keys_h - 36 - 28, 48, [](int n, bool on) { if (note_h) note_h(n, on); });
     return scr;
 }
 
@@ -165,8 +124,8 @@ void set_macro(Macro m, int value) { lock(); dial_set(dials[m], value); unlock()
 void set_octave(int base)
 {
     static const char *nn[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    base_note = base;
     lock();
+    synth_keys::set_base(keys, base);
     lv_label_set_text_fmt(lbl_keys_cap, "%s%d - %s%d", nn[base % 12], base / 12 - 1, nn[(base + 23) % 12], (base + 23) / 12 - 1);
     unlock();
 }
@@ -181,5 +140,7 @@ void set_meter(int peak, int voices)
 }
 
 void set_status(const char *t) { lock(); lv_label_set_text(lbl_status, t); unlock(); }
+
+void highlight(uint32_t mask) { lock(); synth_keys::highlight(keys, mask); unlock(); }
 
 }

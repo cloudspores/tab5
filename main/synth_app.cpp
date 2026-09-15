@@ -8,10 +8,17 @@
  *  - RELEASE moves every operator's last envelope rate,
  *  - MOTION  adds LFO pitch and amplitude modulation and speeds the LFO up.
  * Each dial's centre (50) means "as the voice was designed"; the edited voice is applied live.
+ *
+ * The app has two pages, SOUND and PLAY, that share the engine and the performance layer
+ * (scale lock, chord pads, arpeggiator in synth_perf). Every key press from either page goes
+ * through the performance layer, so the arpeggiator and scale lock apply everywhere.
  */
 #include "synth_app.h"
 #include "synth_engine.h"
 #include "synth_ui.h"
+#include "synth_play_ui.h"
+#include "synth_perf.h"
+#include "synth_keys.h"
 #include "console.h"
 #include "stream.h"
 #include "launcher.h"
@@ -88,13 +95,14 @@ void apply_macros()
 void show_patch()
 {
     synth_ui::set_patch(synth::voice_name(voice_idx), voice_idx, synth::voice_count(), synth::algorithm(), synth::feedback());
+    synth_play_ui::set_patch(synth::voice_name(voice_idx), voice_idx, synth::voice_count());
     for (int i = 0; i < 4; i++) synth_ui::set_macro((synth_ui::Macro)i, macro[i]);
 }
 
 void choose_voice(int idx)
 {
     voice_idx = ((idx % synth::voice_count()) + synth::voice_count()) % synth::voice_count();
-    synth::all_notes_off();
+    perf::all_off();
     synth::select_voice(voice_idx);
     vTaskDelay(pdMS_TO_TICKS(20));                    // the engine applies the program change in its own task
     synth::get_voice(base_voice);
@@ -169,6 +177,45 @@ bool load_sd_bank()
     return ok;
 }
 
+// ------------------------------------------------------------------ pages
+enum Page { PAGE_SOUND = 0, PAGE_PLAY = 1 };
+int page = PAGE_SOUND;
+
+/** Show one of the synth's pages (both exist once the app screen was requested). */
+void show_page(int p)
+{
+    page = p;
+    theme::lock();
+    lv_screen_load(p == PAGE_PLAY ? synth_play_ui::init() : synth_ui::init());
+    theme::unlock();
+    settings::set_int("synth_page", page);
+}
+
+/** App entry point for the launcher: builds both pages and returns the last-used one. */
+lv_obj_t *app_screen()
+{
+    perf::init();
+    lv_obj_t *sound = synth_ui::init();
+    lv_obj_t *play = synth_play_ui::init();
+    page = settings::get_int("synth_page", PAGE_SOUND);
+    return page == PAGE_PLAY ? play : sound;
+}
+
+void set_octave(int base)
+{
+    octave_base = base;
+    synth_ui::set_octave(base);
+    synth_play_ui::set_octave(base);
+}
+
+/** Sounding notes changed (keys, pads or an arpeggiator step): light the keys on both pages. */
+void on_perf_change()
+{
+    uint32_t mask = perf::sounding_mask(octave_base, synth_keys::SPAN);
+    synth_ui::highlight(mask);
+    synth_play_ui::highlight(mask, perf::active_pad());
+}
+
 // ------------------------------------------------------------------ UI handlers (LVGL task; the engine calls are cheap)
 void on_key(synth_ui::Key k)
 {
@@ -176,14 +223,48 @@ void on_key(synth_ui::Key k)
     case synth_ui::KEY_PREV:   choose_voice(voice_idx - 1); break;
     case synth_ui::KEY_NEXT:   choose_voice(voice_idx + 1); break;
     case synth_ui::KEY_RANDOM: random_voice(); break;
-    case synth_ui::KEY_PANIC:  synth::all_notes_off(); break;
-    case synth_ui::KEY_OCT_DOWN: if (octave_base > 24) { octave_base -= 12; synth_ui::set_octave(octave_base); } break;
-    case synth_ui::KEY_OCT_UP:   if (octave_base < 84) { octave_base += 12; synth_ui::set_octave(octave_base); } break;
-    case synth_ui::KEY_FAV: case synth_ui::KEY_EXPERT: break;   // next milestone
+    case synth_ui::KEY_PANIC:  perf::all_off(); break;
+    case synth_ui::KEY_PLAY:   show_page(PAGE_PLAY); break;
+    case synth_ui::KEY_OCT_DOWN: if (octave_base > 24) set_octave(octave_base - 12); break;
+    case synth_ui::KEY_OCT_UP:   if (octave_base < 84) set_octave(octave_base + 12); break;
+    case synth_ui::KEY_FAV: case synth_ui::KEY_EXPERT: break;   // later milestones
     }
 }
-void on_note(int note, bool on) { if (on) synth::note_on(note, 100); else synth::note_off(note); }
+void on_note(int note, bool on) { if (on) perf::key_down(note); else perf::key_up(note); }
 void on_macro(synth_ui::Macro m, int value, bool) { macro[m] = value; apply_macros(); }
+
+void on_play_key(synth_play_ui::Key k)
+{
+    using namespace synth_play_ui;
+    switch (k) {
+    case KEY_LATCH:    perf::set_latch(!perf::latch()); break;
+    case KEY_VOICING:  perf::set_voicing(perf::voicing() % 3 + 1); break;
+    case KEY_SPREAD:   perf::set_spread(!perf::spread()); break;
+    case KEY_SEVENTHS: perf::set_sevenths(!perf::sevenths()); break;
+    case KEY_ARP_OFF: case KEY_ARP_UP: case KEY_ARP_DOWN: case KEY_ARP_RANDOM: perf::set_arp((perf::Arp)(k - KEY_ARP_OFF)); break;
+    case KEY_ROOT_DOWN: perf::set_root(perf::root() - 1); break;
+    case KEY_ROOT_UP:   perf::set_root(perf::root() + 1); break;
+    case KEY_MODE:     perf::set_mode((perf::Mode)((perf::mode() + 1) % perf::MODE_COUNT)); break;
+    case KEY_LOCK:     perf::set_scale_lock(!perf::scale_lock()); break;
+    case KEY_PREV:     choose_voice(voice_idx - 1); return;
+    case KEY_NEXT:     choose_voice(voice_idx + 1); return;
+    case KEY_SOUND:    show_page(PAGE_SOUND); return;
+    case KEY_OCT_DOWN: if (octave_base > 24) set_octave(octave_base - 12); return;
+    case KEY_OCT_UP:   if (octave_base < 84) set_octave(octave_base + 12); return;
+    }
+    perf::save();
+    synth_play_ui::refresh();
+}
+void on_pad(int degree, bool down) { if (down) perf::pad_down(degree); else perf::pad_up(degree); }
+void on_play_dial(synth_play_ui::DialId d, int v, bool released)
+{
+    switch (d) {
+    case synth_play_ui::DIAL_RATE:  perf::set_rate(v); break;
+    case synth_play_ui::DIAL_GATE:  perf::set_gate(v); break;
+    case synth_play_ui::DIAL_TEMPO: perf::set_tempo(v); break;
+    }
+    if (released) { perf::save(); synth_play_ui::refresh(); }
+}
 
 // ------------------------------------------------------------------ lifecycle
 TaskHandle_t meter_task_h = nullptr; volatile bool active = false;
@@ -201,13 +282,15 @@ void on_enter()
     voice_idx = settings::get_int("synth_voice", 0);
     vTaskDelay(pdMS_TO_TICKS(30));
     choose_voice(voice_idx);
-    synth_ui::set_octave(octave_base);
+    set_octave(octave_base);
+    synth_play_ui::refresh();
     active = true;
     if (!meter_task_h) xTaskCreatePinnedToCore(meter_task, "synth_meter", 4 * 1024, nullptr, 3, &meter_task_h, 0);
 }
 
 void on_exit()
 {
+    perf::all_off();
     active = false;
     for (int i = 0; i < 30 && meter_task_h; i++) vTaskDelay(pdMS_TO_TICKS(10));
     synth::stop();
@@ -217,16 +300,36 @@ const char *status() { return synth::running() ? "ENGINE ON" : ""; }
 
 } // namespace
 
-const App synth_app = { "synth", "fm synth", "Six-operator synth, sequencer, songs", LV_SYMBOL_LOOP, synth_ui::init, on_enter, on_exit, status };
+const App synth_app = { "synth", "fm synth", "Six-operator synth, sequencer, songs", LV_SYMBOL_LOOP, app_screen, on_enter, on_exit, status };
 
 namespace synth_app_ns {
 void register_console()
 {
-    console::add("note",   [](const char *a, int v) { if (strstr(a, "off")) synth::note_off(v); else synth::note_on(v, 100); }, "note N [off]: play/stop a MIDI note");
+    synth_ui::on_key(on_key); synth_ui::on_note(on_note); synth_ui::on_macro(on_macro);
+    synth_play_ui::on_key(on_play_key); synth_play_ui::on_pad(on_pad); synth_play_ui::on_note(on_note); synth_play_ui::on_dial(on_play_dial);
+    perf::on_change(on_perf_change);
+    console::add("note",   [](const char *a, int v) { if (strstr(a, "off")) perf::key_up(v); else perf::key_down(v); }, "note N [off]: press/release a key (scale lock and arp apply)");
     console::add("voice",  [](const char *, int v) { choose_voice(v - 1); }, "voice N: select bank voice");
     console::add("random", [](const char *, int) { random_voice(); }, "random voice");
     console::add("macro",  [](const char *a, int m) { const char *sp = strchr(a, ' '); if (sp) { macro[m & 3] = atoi(sp + 1); apply_macros(); show_patch(); } }, "macro I V: set dial I (0-3) to V (0-100)");
-    console::add("panic",  [](const char *, int) { synth::all_notes_off(); }, "all notes off");
+    console::add("panic",  [](const char *, int) { perf::all_off(); }, "all notes off");
+    console::add("page",   [](const char *a, int) { show_page(strcmp(a, "play") == 0 ? PAGE_PLAY : PAGE_SOUND); }, "page sound|play: switch the synth page");
+    console::add("pad",    [](const char *a, int v) { if (strstr(a, "off")) perf::pad_up(v - 1); else perf::pad_down(v - 1); }, "pad N [off]: press/release chord pad 1-7");
+    console::add("arp",    [](const char *a, int) {
+        perf::Arp m = !strcmp(a, "up") ? perf::ARP_UP : !strcmp(a, "down") ? perf::ARP_DOWN : !strcmp(a, "rnd") ? perf::ARP_RANDOM : perf::ARP_OFF;
+        perf::set_arp(m); perf::save(); synth_play_ui::refresh(); }, "arp off|up|down|rnd");
+    console::add("tempo",  [](const char *, int v) { perf::set_tempo(v); perf::save(); synth_play_ui::refresh(); }, "tempo BPM");
+    console::add("rate",   [](const char *, int v) { perf::set_rate(v); perf::save(); synth_play_ui::refresh(); }, "rate 0-6: 1/2 1/4 1/8 1/8T 1/16 1/16T 1/32");
+    console::add("gate",   [](const char *, int v) { perf::set_gate(v); perf::save(); synth_play_ui::refresh(); }, "gate 10-100 percent");
+    console::add("scale",  [](const char *a, int v) {
+        const char *sp = strchr(a, ' ');
+        perf::set_root(v); if (sp) perf::set_mode((perf::Mode)atoi(sp + 1));
+        perf::save(); synth_play_ui::refresh();
+        ESP_LOGI(TAG, "scale %s", perf::scale_name()); }, "scale ROOT [MODE]: root 0-11 (C=0), mode 0-6");
+    console::add("latch",  [](const char *a, int) { perf::set_latch(!strcmp(a, "on")); perf::save(); synth_play_ui::refresh(); }, "latch on|off");
+    console::add("lock",   [](const char *a, int) { perf::set_scale_lock(!strcmp(a, "on")); perf::save(); synth_play_ui::refresh(); }, "lock on|off: keyboard scale lock");
+    console::add("chords", [](const char *, int) {
+        for (int i = 0; i < perf::PADS; i++) { char n[8], sy[12]; perf::chord_label(i, n, sy); ESP_LOGI(TAG, "pad %d: %-5s %s", i + 1, n, sy); } }, "list the chord pads for the current scale");
     console::add("dump",   [](const char *, int) {                           // hex dump of the live voice
         ESP_LOGI(TAG, "heap integrity: %s", heap_caps_check_integrity_all(true) ? "ok" : "CORRUPT");
         uint8_t v[synth::VOICE_PARAMS]; synth::get_voice(v);

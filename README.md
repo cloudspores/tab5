@@ -45,7 +45,16 @@ adds vibrato and tremolo), RANDOM for a fresh voice, PANIC, an output meter and 
 keyboard with octave shift. Thirty-two factory voices ship in `main/synth_bank.cpp`, written as
 readable parameter tables; DX7 `.syx` banks (4104-byte bulk dumps) in `/tab5/synth/` on the microSD
 card are loaded on entry. The radio releases the codec while the synth runs and resumes afterwards.
-Console: `open synth`, `note N [off]`, `voice N`, `random`, `macro M V`, `panic`, `peak`, `dump`.
+The PLAY page (PLAY key on the Sound page, SOUND key to return) is for playing with one finger:
+seven chord pads carry the diatonic chords of the current key (named, e.g. `ii Dm`), the eighth pad
+switches them to sevenths; LATCH keeps a tapped chord sounding, VOICING cycles inversions, SPREAD opens
+the voicing. The ARP module cycles the held notes (UP, DOWN, RND) at RATE (1/2 to 1/32 with triplets),
+GATE and TEMPO; the SCALE module sets root and mode (major, minor, dorian, mixolydian, lydian, phrygian,
+harmonic minor) and LOCK snaps the keyboard onto the scale. Everything played on either page goes
+through this performance layer (`main/synth_perf.cpp`), so the arpeggiator and scale lock also apply
+to the keyboard. Console: `open synth`, `page sound|play`, `note N [off]`, `voice N`, `random`,
+`macro M V`, `pad N [off]`, `arp off|up|down|rnd`, `tempo`, `rate`, `gate`, `scale ROOT [MODE]`,
+`latch`, `lock`, `chords`, `panic`, `peak`, `dump`.
 
 ## Updates
 
@@ -96,7 +105,8 @@ step is compiled out, which is fine on a board whose C6 is already updated).
 | `main/settings_app.*`, `update.*` | settings screen; firmware update from the GitHub catalogue |
 | `main/translate_app.*` | live translation: microphone streaming, bridge events, spoken replies |
 | `main/synth_engine.*` | FM engine wrapper: render task, MIDI ring, bank loading, voice access |
-| `main/synth_app.*`, `synth_ui.*`, `synth_bank.*` | synth logic and macros, Sound screen, factory voices |
+| `main/synth_app.*`, `synth_ui.*`, `synth_bank.*` | synth logic and macros, Sound page, factory voices |
+| `main/synth_perf.*`, `synth_play_ui.*`, `synth_keys.*` | scale lock, chord pads, arpeggiator; Play page; shared keyboard widget |
 | `main/lv_mem_psram.cpp` | LVGL allocator backend that keeps widgets in PSRAM |
 | `components/msfa/` | vendored FM synthesis core (Apache-2.0), see its README for local changes |
 | `main/c6_update.*` | one-time OTA of the C6 co-processor firmware over the hosted link |
