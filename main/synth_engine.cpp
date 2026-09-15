@@ -76,13 +76,25 @@ void render_task(void *)
     auto spk = (esp_codec_dev_handle_t)stream::speaker();
     static int16_t mono[BLOCK];
     static int16_t stereo[BLOCK * 2];
+    // The engine leaves headroom for 16 voices, so a single voice sits around -20 dBFS and the
+    // speaker sounds weak. A master gain lifts it and a block limiter keeps chords from clipping:
+    // the gain drops instantly when a block would exceed the ceiling and recovers over ~0.3 s.
+    constexpr float MASTER_GAIN = 4.0f, CEILING = 30000.0f, RELEASE = 0.02f;
+    float lim = 1.0f;
     while (run) {
         unit->GetSamples(BLOCK, mono);
+        int raw_pk = 0;
+        for (int i = 0; i < BLOCK; i++) { int v = mono[i] < 0 ? -mono[i] : mono[i]; if (v > raw_pk) raw_pk = v; }
+        float want = raw_pk * MASTER_GAIN > CEILING ? CEILING / (raw_pk * MASTER_GAIN) : 1.0f;
+        lim = want < lim ? want : lim + (1.0f - lim) * RELEASE;
+        const float g = MASTER_GAIN * lim;
         int pk = 0;
         for (int i = 0; i < BLOCK; i++) {
-            int v = mono[i] < 0 ? -mono[i] : mono[i];
-            if (v > pk) pk = v;
-            stereo[2 * i] = mono[i]; stereo[2 * i + 1] = mono[i];
+            int v = (int)(mono[i] * g);
+            if (v > 32767) v = 32767; else if (v < -32767) v = -32767;
+            int a = v < 0 ? -v : v;
+            if (a > pk) pk = a;
+            stereo[2 * i] = (int16_t)v; stereo[2 * i + 1] = (int16_t)v;
         }
         peak = pk;
         blocks_rendered++;

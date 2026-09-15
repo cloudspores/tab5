@@ -151,6 +151,7 @@ int SynthUnit::ProcessMidiMessage(const uint8_t *buf, int buf_size) {
         active_note_[note_ix].keydown = true;
         active_note_[note_ix].sustained = sustain_;
         active_note_[note_ix].live = true;
+        active_note_[note_ix].silent_blocks = 0;
         active_note_[note_ix].dx7_note->init(unpacked_patch_, buf[1], buf[2]);
       }
       return 3;
@@ -262,7 +263,9 @@ void SynthUnit::GetSamples(int n_samples, int16_t *buffer) {
         // to silence after key-up can be retired. Upstream msfa keeps every note
         // "live" forever, which burns CPU on silence and makes the voice count
         // meaningless. Anything below 1<<12 here is under one 16-bit LSB after
-        // the output scaling below.
+        // the output scaling below. A single quiet block is not enough: a low
+        // note spends a whole 64-sample block near its zero crossing, so the
+        // note must stay quiet for ~100 ms before it is retired.
         int32_t *scratch = audiobuf2.get();
         for (int j = 0; j < N; ++j) scratch[j] = 0;
         active_note_[note].dx7_note->compute(scratch, lfovalue, lfodelay,
@@ -273,7 +276,9 @@ void SynthUnit::GetSamples(int n_samples, int16_t *buffer) {
           if (scratch[j] > (1 << 12) || scratch[j] < -(1 << 12)) silent = false;
         }
         if (silent && !active_note_[note].keydown && !active_note_[note].sustained) {
-          active_note_[note].live = false;
+          if (++active_note_[note].silent_blocks >= 64) active_note_[note].live = false;
+        } else {
+          active_note_[note].silent_blocks = 0;
         }
       }
     }

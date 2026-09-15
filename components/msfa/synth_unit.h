@@ -25,6 +25,7 @@ struct ActiveNote {
   bool keydown;
   bool sustained;
   bool live;
+  int silent_blocks;   // tab5: consecutive near-silent blocks after key-up (see GetSamples)
   Dx7Note *dx7_note;
 };
 
