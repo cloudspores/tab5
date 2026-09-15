@@ -85,9 +85,39 @@ lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, 
 
 // ------------------------------------------------------------------ dial
 namespace {
-// ---- lens: a 4x copy of the dial being touched, shown on the top layer above the finger ----
+// ---- lens: a 4x copy of the dial being touched, shown above (or below) the finger and turnable itself ----
+void dial_pointer(Dial *d);
 namespace {
-struct Lens { lv_obj_t *box = nullptr, *disc, *hub, *ptr, *lbl; lv_point_precise_t pts[2]; int size; } lens;
+struct Lens {
+    lv_obj_t *box = nullptr, *disc, *hub, *ptr, *lbl, *arc;
+    lv_point_precise_t pts[2];
+    int size;
+    Dial *current = nullptr;          ///< the small dial the lens mirrors
+    lv_timer_t *closer = nullptr;     ///< closes the lens a moment after the last touch
+} lens;
+void lens_hide();
+void lens_update(Dial *d);
+
+/** The lens's own arc: turning it drives the small dial exactly as a finger on the small dial would. */
+void lens_arc_cb(lv_event_t *e)
+{
+    Dial *d = lens.current;
+    if (!d) return;
+    lv_event_code_t c = lv_event_get_code(e);
+    if (c == LV_EVENT_PRESSED) {
+        lv_timer_pause(lens.closer);
+    } else if (c == LV_EVENT_VALUE_CHANGED) {
+        int v = lv_arc_get_value(lens.arc);
+        lv_arc_set_value(d->arc, v);
+        dial_pointer(d);
+        lv_label_set_text_fmt(d->lbl, "%s %d", d->caption, v);
+        if (d->on_change) d->on_change(d, v, false);
+        lens_update(d);
+    } else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) {
+        if (d->on_change) d->on_change(d, lv_arc_get_value(lens.arc), true);
+        lv_timer_reset(lens.closer); lv_timer_resume(lens.closer);
+    }
+}
 Dial *dials[32]; int n_dials = 0;                    ///< registry (for the console's dial_press)
 
 void lens_build()
@@ -117,6 +147,15 @@ void lens_build()
     lv_obj_clear_flag(lens.ptr, LV_OBJ_FLAG_CLICKABLE);
     lens.lbl = label(lens.box, "", &familjen_medium_24, INK);
     lv_obj_set_style_text_align(lens.lbl, LV_TEXT_ALIGN_CENTER, 0);
+    lens.arc = lv_arc_create(lens.box);                   // invisible, on top of the disc: the touch surface
+    lv_arc_set_bg_angles(lens.arc, 135, 45);
+    lv_obj_set_style_arc_opa(lens.arc, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_arc_opa(lens.arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_opa(lens.arc, LV_OPA_TRANSP, LV_PART_KNOB);
+    lv_obj_set_style_pad_all(lens.arc, 20, LV_PART_KNOB);
+    lv_obj_add_event_cb(lens.arc, lens_arc_cb, LV_EVENT_ALL, nullptr);
+    lens.closer = lv_timer_create([](lv_timer_t *) { lens_hide(); }, 1200, nullptr);
+    lv_timer_pause(lens.closer);
     lv_obj_add_flag(lens.box, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -144,11 +183,18 @@ void lens_show(Dial *d)
     lv_obj_set_size(lens.hub, size / 10, size / 10); lv_obj_set_pos(lens.hub, size / 2 - size / 20, size / 2 - size / 20);
     lv_obj_set_style_line_width(lens.ptr, size / 24, 0);
     lv_obj_set_width(lens.lbl, size); lv_obj_set_pos(lens.lbl, 0, size + 6);
+    lv_obj_set_pos(lens.arc, 0, 0); lv_obj_set_size(lens.arc, size, size);
+    lv_arc_set_range(lens.arc, lv_arc_get_min_value(d->arc), lv_arc_get_max_value(d->arc));
+    lv_arc_set_value(lens.arc, lv_arc_get_value(d->arc));
+    lens.current = d;
+    lv_timer_pause(lens.closer);
     // above the dial, centred on it, kept on screen; below it when there is no room above
     lv_area_t a; lv_obj_get_coords(d->arc, &a);
     int x = (a.x1 + a.x2) / 2 - size / 2;
-    int y = a.y1 - 24 - (size + label_h);
-    if (y < 8) y = a.y2 + 24;
+    const int total = size + label_h;
+    int y = a.y1 - 24 - total;                            // preferred: above the dial
+    if (y < 8) y = a.y2 + 24;                             // else below it
+    if (y + total > H - 8) y = H - 8 - total;             // else as low as fits, overlapping the dial
     if (x < 8) x = 8;
     if (x + size > W - 8) x = W - 8 - size;
     lv_obj_set_parent(lens.box, lv_screen_active());
@@ -158,7 +204,17 @@ void lens_show(Dial *d)
     lens_update(d);
 }
 
-void lens_hide() { if (lens.box) lv_obj_add_flag(lens.box, LV_OBJ_FLAG_HIDDEN); }
+void lens_hide()
+{
+    if (!lens.box) return;
+    lv_obj_add_flag(lens.box, LV_OBJ_FLAG_HIDDEN);
+    if (lens.current) lv_obj_remove_state(lens.current->disc, LV_STATE_PRESSED);
+    lens.current = nullptr;
+    lv_timer_pause(lens.closer);
+}
+
+/** Keep the lens open for a moment after the finger leaves, so it can be moved onto the big dial. */
+void lens_linger() { if (lens.box && lens.current) { lv_timer_reset(lens.closer); lv_timer_resume(lens.closer); } }
 } // namespace
 
 void dial_pointer(Dial *d)
@@ -181,11 +237,12 @@ void dial_cb(lv_event_t *e)
         dial_pointer(d);
         lv_label_set_text_fmt(d->lbl, "%s %d", d->caption, (int)lv_arc_get_value(d->arc));
         if (d->on_change) d->on_change(d, (int)lv_arc_get_value(d->arc), false);
+        if (lens.current == d) lv_arc_set_value(lens.arc, lv_arc_get_value(d->arc));
         lens_update(d);
     } else if (c == LV_EVENT_PRESSED) {
         lens_show(d);
     } else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) {
-        lens_hide();
+        lens_linger();
         if (c == LV_EVENT_RELEASED && d->on_change) d->on_change(d, (int)lv_arc_get_value(d->arc), true);
     }
 }
@@ -235,8 +292,7 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
     lv_obj_add_event_cb(d->arc, [](lv_event_t *e) {
         Dial *dd = (Dial *)lv_event_get_user_data(e);
         lv_event_code_t c = lv_event_get_code(e);
-        if (c == LV_EVENT_PRESSED) lv_obj_add_state(dd->disc, LV_STATE_PRESSED);
-        else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) lv_obj_remove_state(dd->disc, LV_STATE_PRESSED);
+        if (c == LV_EVENT_PRESSED) lv_obj_add_state(dd->disc, LV_STATE_PRESSED);   // released by lens_hide
     }, LV_EVENT_ALL, d);
     lv_obj_add_event_cb(d->arc, dial_cb, LV_EVENT_ALL, d);
     d->lbl = label(parent, caption, &jbmono_14, MID);
@@ -253,7 +309,7 @@ bool dial_press(const char *caption, bool on)
     for (int i = 0; i < n_dials; i++) {
         if (strcmp(dials[i]->caption, caption)) continue;
         if (on) { lv_obj_add_state(dials[i]->disc, LV_STATE_PRESSED); lens_show(dials[i]); }
-        else { lv_obj_remove_state(dials[i]->disc, LV_STATE_PRESSED); lens_hide(); }
+        else lens_hide();
         return true;
     }
     return false;
