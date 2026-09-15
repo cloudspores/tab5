@@ -21,7 +21,7 @@ lv_obj_t *panel(lv_obj_t *parent, int x, int y, int w, int h);
 lv_obj_t *label(lv_obj_t *parent, const char *text, const lv_font_t *font, uint32_t color);
 void module_label(lv_obj_t *parent, const char *num, const char *name);
 lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, lv_event_cb_t cb, void *ud);
-void grow_on_press(lv_obj_t *obj);                  // swell to 125 % while touched (keys, pads)
+void grow_on_press(lv_obj_t *obj, int percent);     // swell to `percent` while touched (keys 200, pads 150); dials open a 4x lens
 void keycap_accent(lv_obj_t *keycap, bool on);           // toggle/radio state: accent when on
 void keycap_text(lv_obj_t *keycap, const char *text);
 
@@ -38,4 +38,5 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
 void  dial_set(Dial *d, int value);                    ///< move the pointer and update the caption value
 int   dial_value(Dial *d);
 void  dial_caption(Dial *d, const char *text);         ///< override the caption line entirely
+bool  dial_press(const char *caption, bool on);        ///< simulate a finger on the dial with this caption (screenshots)
 }

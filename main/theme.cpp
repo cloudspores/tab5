@@ -1,6 +1,7 @@
 #include "theme.h"
 #include "bsp/esp-bsp.h"
 #include <cmath>
+#include <cstring>
 #include <cstdio>
 
 namespace theme {
@@ -47,7 +48,7 @@ void module_label(lv_obj_t *parent, const char *num, const char *name)
     lv_obj_align_to(t, n, LV_ALIGN_OUT_RIGHT_MID, 12, 0);
 }
 
-void grow_on_press(lv_obj_t *obj)
+void grow_on_press(lv_obj_t *obj, int percent)
 {
     // Pressed state: scale to 112% about the centre, animated over 60 ms both ways. The control
     // keeps its layout slot; only its drawing (and hit area) grows while the finger is down.
@@ -57,7 +58,7 @@ void grow_on_press(lv_obj_t *obj)
     if (!init) { lv_style_transition_dsc_init(&tr, props, lv_anim_path_ease_out, 60, 0, nullptr); init = true; }
     lv_obj_set_style_transform_pivot_x(obj, lv_pct(50), 0);
     lv_obj_set_style_transform_pivot_y(obj, lv_pct(50), 0);
-    lv_obj_set_style_transform_scale(obj, 320, LV_STATE_PRESSED);   // 256 = 100 %, so 125 %: visible around a fingertip
+    lv_obj_set_style_transform_scale(obj, 256 * percent / 100, LV_STATE_PRESSED);   // 256 = 100 %
     lv_obj_set_style_transition(obj, &tr, LV_STATE_PRESSED);
     lv_obj_set_style_transition(obj, &tr, 0);
 }
@@ -76,7 +77,7 @@ lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, 
     lv_obj_t *l = label(b, text, &jbmono_14, accent ? 0xffffff : INK);
     lv_obj_center(l);
     lv_obj_set_ext_click_area(b, TOUCH_SLOP);            // a finger near the key still presses it
-    grow_on_press(b);
+    grow_on_press(b, 200);
     if (cb) lv_obj_add_event_cb(b, cb, LV_EVENT_ALL, ud);
     return b;
 }
@@ -84,6 +85,82 @@ lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, 
 
 // ------------------------------------------------------------------ dial
 namespace {
+// ---- lens: a 4x copy of the dial being touched, shown on the top layer above the finger ----
+namespace {
+struct Lens { lv_obj_t *box = nullptr, *disc, *hub, *ptr, *lbl; lv_point_precise_t pts[2]; int size; } lens;
+Dial *dials[32]; int n_dials = 0;                    ///< registry (for the console's dial_press)
+
+void lens_build()
+{
+    if (lens.box) return;
+    lens.box = lv_obj_create(lv_screen_active());        // re-parented to whichever screen is active when shown
+    lv_obj_remove_style_all(lens.box);
+    lv_obj_clear_flag(lens.box, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lens.disc = lv_obj_create(lens.box);
+    lv_obj_set_style_radius(lens.disc, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(lens.disc, lv_color_hex(DISC), 0);
+    lv_obj_set_style_border_color(lens.disc, lv_color_hex(LIGHT), 0);
+    lv_obj_set_style_border_width(lens.disc, 2, 0);
+    lv_obj_set_style_shadow_width(lens.disc, 40, 0);
+    lv_obj_set_style_shadow_color(lens.disc, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_shadow_opa(lens.disc, LV_OPA_30, 0);
+    lv_obj_set_style_shadow_offset_y(lens.disc, 10, 0);
+    lv_obj_clear_flag(lens.disc, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lens.hub = lv_obj_create(lens.box);
+    lv_obj_set_style_radius(lens.hub, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(lens.hub, lv_color_hex(INK), 0);
+    lv_obj_set_style_border_width(lens.hub, 0, 0);
+    lv_obj_clear_flag(lens.hub, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lens.ptr = lv_line_create(lens.box);
+    lv_obj_set_style_line_color(lens.ptr, lv_color_hex(ORANGE), 0);
+    lv_obj_set_style_line_rounded(lens.ptr, true, 0);
+    lv_obj_clear_flag(lens.ptr, LV_OBJ_FLAG_CLICKABLE);
+    lens.lbl = label(lens.box, "", &familjen_medium_24, INK);
+    lv_obj_set_style_text_align(lens.lbl, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_add_flag(lens.box, LV_OBJ_FLAG_HIDDEN);
+}
+
+void lens_update(Dial *d)
+{
+    if (!lens.box || lv_obj_has_flag(lens.box, LV_OBJ_FLAG_HIDDEN)) return;
+    int v = lv_arc_get_value(d->arc), mn = lv_arc_get_min_value(d->arc), mx = lv_arc_get_max_value(d->arc);
+    float f = mx > mn ? (float)(v - mn) / (float)(mx - mn) : 0.0f;
+    float ang = (135.0f + 270.0f * f) * 3.14159265f / 180.0f;
+    const int c = lens.size / 2, r_in = lens.size / 12, r_out = (int)(lens.size * 0.38f);
+    lens.pts[0].x = c + (int)(r_in * cosf(ang));  lens.pts[0].y = c + (int)(r_in * sinf(ang));
+    lens.pts[1].x = c + (int)(r_out * cosf(ang)); lens.pts[1].y = c + (int)(r_out * sinf(ang));
+    lv_line_set_points(lens.ptr, lens.pts, 2);
+    lv_label_set_text(lens.lbl, lv_label_get_text(d->lbl));
+}
+
+void lens_show(Dial *d)
+{
+    lens_build();
+    const int size = lv_obj_get_width(d->arc) * 4;          // four times the dial
+    lens.size = size;
+    const int label_h = 40;
+    lv_obj_set_size(lens.box, size, size + label_h);
+    lv_obj_set_pos(lens.disc, 0, 0); lv_obj_set_size(lens.disc, size, size);
+    lv_obj_set_size(lens.hub, size / 10, size / 10); lv_obj_set_pos(lens.hub, size / 2 - size / 20, size / 2 - size / 20);
+    lv_obj_set_style_line_width(lens.ptr, size / 24, 0);
+    lv_obj_set_width(lens.lbl, size); lv_obj_set_pos(lens.lbl, 0, size + 6);
+    // above the dial, centred on it, kept on screen; below it when there is no room above
+    lv_area_t a; lv_obj_get_coords(d->arc, &a);
+    int x = (a.x1 + a.x2) / 2 - size / 2;
+    int y = a.y1 - 24 - (size + label_h);
+    if (y < 8) y = a.y2 + 24;
+    if (x < 8) x = 8;
+    if (x + size > W - 8) x = W - 8 - size;
+    lv_obj_set_parent(lens.box, lv_screen_active());
+    lv_obj_move_foreground(lens.box);
+    lv_obj_set_pos(lens.box, x, y);
+    lv_obj_clear_flag(lens.box, LV_OBJ_FLAG_HIDDEN);
+    lens_update(d);
+}
+
+void lens_hide() { if (lens.box) lv_obj_add_flag(lens.box, LV_OBJ_FLAG_HIDDEN); }
+} // namespace
+
 void dial_pointer(Dial *d)
 {
     int v = lv_arc_get_value(d->arc), mn = lv_arc_get_min_value(d->arc), mx = lv_arc_get_max_value(d->arc);
@@ -104,8 +181,12 @@ void dial_cb(lv_event_t *e)
         dial_pointer(d);
         lv_label_set_text_fmt(d->lbl, "%s %d", d->caption, (int)lv_arc_get_value(d->arc));
         if (d->on_change) d->on_change(d, (int)lv_arc_get_value(d->arc), false);
-    } else if (c == LV_EVENT_RELEASED) {
-        if (d->on_change) d->on_change(d, (int)lv_arc_get_value(d->arc), true);
+        lens_update(d);
+    } else if (c == LV_EVENT_PRESSED) {
+        lens_show(d);
+    } else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) {
+        lens_hide();
+        if (c == LV_EVENT_RELEASED && d->on_change) d->on_change(d, (int)lv_arc_get_value(d->arc), true);
     }
 }
 }
@@ -150,7 +231,7 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
     lv_obj_set_style_pad_all(d->arc, 6, LV_PART_KNOB);
     lv_obj_set_ext_click_area(d->arc, TOUCH_SLOP + 8);   // dials are small; catch fingers around the disc too
     d->disc = disc;
-    grow_on_press(disc);                                 // the disc swells while the finger is on the arc
+    grow_on_press(disc, 125);                            // the disc swells a little; the lens does the real magnifying
     lv_obj_add_event_cb(d->arc, [](lv_event_t *e) {
         Dial *dd = (Dial *)lv_event_get_user_data(e);
         lv_event_code_t c = lv_event_get_code(e);
@@ -163,7 +244,19 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
     lv_obj_set_style_text_align(d->lbl, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_pos(d->lbl, x - 10, y + size + 8);
     dial_pointer(d);
+    if (n_dials < 32) dials[n_dials++] = d;
     return d;
+}
+
+bool dial_press(const char *caption, bool on)
+{
+    for (int i = 0; i < n_dials; i++) {
+        if (strcmp(dials[i]->caption, caption)) continue;
+        if (on) { lv_obj_add_state(dials[i]->disc, LV_STATE_PRESSED); lens_show(dials[i]); }
+        else { lv_obj_remove_state(dials[i]->disc, LV_STATE_PRESSED); lens_hide(); }
+        return true;
+    }
+    return false;
 }
 
 void dial_set(Dial *d, int value)

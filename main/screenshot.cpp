@@ -75,9 +75,11 @@ void register_console()
         snprintf(name, sizeof name, "%.*s", (int)(sp - a), a);
         theme::lock();
         lv_obj_t *k = find_key(lv_screen_active(), name);
-        if (k) { if (!strcmp(sp + 1, "on")) lv_obj_add_state(k, LV_STATE_PRESSED); else lv_obj_remove_state(k, LV_STATE_PRESSED); }
+        bool on = !strcmp(sp + 1, "on"), ok = k != nullptr;
+        if (k) { if (on) lv_obj_add_state(k, LV_STATE_PRESSED); else lv_obj_remove_state(k, LV_STATE_PRESSED); }
+        else ok = theme::dial_press(name, on);
         theme::unlock();
-        ESP_LOGI(TAG, "key '%s' %s", name, k ? "toggled" : "not found");
+        ESP_LOGI(TAG, "'%s' %s", name, ok ? "toggled" : "not found");
     }, "hold KEYTEXT on|off: press/release a key by its label (for screenshots)");
 }
 }
