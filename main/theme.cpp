@@ -60,6 +60,7 @@ lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, 
     lv_obj_set_style_pad_all(b, 0, 0);
     lv_obj_t *l = label(b, text, &jbmono_14, accent ? 0xffffff : INK);
     lv_obj_center(l);
+    lv_obj_set_ext_click_area(b, TOUCH_SLOP);            // a finger near the key still presses it
     if (cb) lv_obj_add_event_cb(b, cb, LV_EVENT_ALL, ud);
     return b;
 }
@@ -133,6 +134,7 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
     lv_obj_set_style_arc_opa(d->arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(d->arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_pad_all(d->arc, 6, LV_PART_KNOB);
+    lv_obj_set_ext_click_area(d->arc, TOUCH_SLOP + 8);   // dials are small; catch fingers around the disc too
     lv_obj_add_event_cb(d->arc, dial_cb, LV_EVENT_ALL, d);
     d->lbl = label(parent, caption, &jbmono_14, MID);
     lv_obj_set_width(d->lbl, size + 20);

@@ -70,6 +70,7 @@ lv_obj_t *make_pad(lv_obj_t *parent, int x, int y, int w, int h, int degree)
     lv_obj_set_style_pad_all(b, 10, 0);
     pad_num[degree] = label(b, "", &jbmono_14, MID); lv_obj_align(pad_num[degree], LV_ALIGN_TOP_LEFT, 0, 0);
     pad_sym[degree] = label(b, "", &familjen_medium_24, INK); lv_obj_align(pad_sym[degree], LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_set_ext_click_area(b, 6);                       // pads are large; a small margin is enough
     lv_obj_add_event_cb(b, pad_cb, LV_EVENT_ALL, (void *)(intptr_t)degree);
     return b;
 }
@@ -149,9 +150,9 @@ lv_obj_t *init()
     lv_obj_t *pa = panel(scr, rx, top, right_w, rh);
     module_label(pa, "03", "ARP");
     static const char *arp_names[4] = {"OFF", "UP", "DOWN", "RND"};
-    static const int arp_w[4] = {50, 44, 58, 50};
-    for (int i = 0, x = 0; i < 4; x += arp_w[i] + 8, i++) { k_arp[i] = keycap(pa, arp_names[i], arp_w[i], 32, false, key_cb, (void *)(intptr_t)(KEY_ARP_OFF + i)); lv_obj_set_pos(k_arp[i], x, 24); }
-    const int ds = 66, dy = 64, dgap = (right_w - 36 - 3 * ds) / 2;
+    static const int arp_w[4] = {64, 56, 72, 64};
+    for (int i = 0, x = 0; i < 4; x += arp_w[i] + 10, i++) { k_arp[i] = keycap(pa, arp_names[i], arp_w[i], 38, false, key_cb, (void *)(intptr_t)(KEY_ARP_OFF + i)); lv_obj_set_pos(k_arp[i], x, 22); }
+    const int ds = 72, dy = 66, dgap = (right_w - 36 - 3 * ds) / 2;
     d_rate  = dial_create(pa, 0, dy, ds, "RATE", 0, perf::RATES - 1, dial_cb);
     d_gate  = dial_create(pa, ds + dgap, dy, ds, "GATE", 10, 100, dial_cb);
     d_tempo = dial_create(pa, 2 * (ds + dgap), dy, ds, "TEMPO", 40, 240, dial_cb);
@@ -159,18 +160,18 @@ lv_obj_t *init()
     lv_obj_t *ps = panel(scr, rx, top + rh + GAP, right_w, rh);
     module_label(ps, "04", "SCALE");
     lbl_scale = label(ps, "C major", &familjen_bold_52, INK); lv_obj_align(lbl_scale, LV_ALIGN_TOP_LEFT, 0, 24);
-    lv_obj_t *r1 = keycap(ps, "ROOT " LV_SYMBOL_LEFT, 74, 32, false, key_cb, (void *)KEY_ROOT_DOWN); lv_obj_align(r1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-    lv_obj_t *r2 = keycap(ps, "ROOT " LV_SYMBOL_RIGHT, 74, 32, false, key_cb, (void *)KEY_ROOT_UP); lv_obj_align(r2, LV_ALIGN_BOTTOM_LEFT, 82, 0);
-    k_mode = keycap(ps, "MAJOR", 108, 32, false, key_cb, (void *)KEY_MODE); lv_obj_align(k_mode, LV_ALIGN_BOTTOM_LEFT, 164, 0);
-    k_lock = keycap(ps, "LOCK", 56, 32, false, key_cb, (void *)KEY_LOCK); lv_obj_align(k_lock, LV_ALIGN_BOTTOM_LEFT, 280, 0);
+    lv_obj_t *r1 = keycap(ps, "ROOT " LV_SYMBOL_LEFT, 74, 38, false, key_cb, (void *)KEY_ROOT_DOWN); lv_obj_align(r1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_t *r2 = keycap(ps, "ROOT " LV_SYMBOL_RIGHT, 74, 38, false, key_cb, (void *)KEY_ROOT_UP); lv_obj_align(r2, LV_ALIGN_BOTTOM_LEFT, 82, 0);
+    k_mode = keycap(ps, "MAJOR", 108, 38, false, key_cb, (void *)KEY_MODE); lv_obj_align(k_mode, LV_ALIGN_BOTTOM_LEFT, 164, 0);
+    k_lock = keycap(ps, "LOCK", 56, 38, false, key_cb, (void *)KEY_LOCK); lv_obj_align(k_lock, LV_ALIGN_BOTTOM_LEFT, 280, 0);
 
     lv_obj_t *pp = panel(scr, rx, top + 2 * (rh + GAP), right_w, H - PAD - (top + 2 * (rh + GAP)));
     module_label(pp, "05", "PATCH");
     lbl_patch = label(pp, "--", &familjen_medium_24, INK); lv_obj_align(lbl_patch, LV_ALIGN_TOP_LEFT, 0, 28);
     lbl_patch_idx = label(pp, "", &jbmono_14, MID); lv_obj_align(lbl_patch_idx, LV_ALIGN_TOP_LEFT, 0, 62);
-    lv_obj_t *p1 = keycap(pp, LV_SYMBOL_LEFT, 44, 32, false, key_cb, (void *)KEY_PREV); lv_obj_align(p1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-    lv_obj_t *p2 = keycap(pp, LV_SYMBOL_RIGHT, 44, 32, false, key_cb, (void *)KEY_NEXT); lv_obj_align(p2, LV_ALIGN_BOTTOM_LEFT, 52, 0);
-    lv_obj_t *p3 = keycap(pp, "SOUND " LV_SYMBOL_RIGHT, 96, 32, true, key_cb, (void *)KEY_SOUND); lv_obj_align(p3, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_t *p1 = keycap(pp, LV_SYMBOL_LEFT, 48, 38, false, key_cb, (void *)KEY_PREV); lv_obj_align(p1, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_t *p2 = keycap(pp, LV_SYMBOL_RIGHT, 48, 38, false, key_cb, (void *)KEY_NEXT); lv_obj_align(p2, LV_ALIGN_BOTTOM_LEFT, 56, 0);
+    lv_obj_t *p3 = keycap(pp, "SOUND " LV_SYMBOL_RIGHT, 96, 38, true, key_cb, (void *)KEY_SOUND); lv_obj_align(p3, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 
     refresh_locked();
     return scr;

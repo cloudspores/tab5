@@ -12,6 +12,7 @@ LV_FONT_DECLARE(jbmono_32);
 namespace theme {
 constexpr uint32_t BG = 0xd4d1c9, PANEL = 0xebeae4, INK = 0x1c1c1a, MID = 0x76746e, LIGHT = 0xb5b2aa, ORANGE = 0xff5a1f, DISC = 0xf6f5f1;
 constexpr int W = 1280, H = 720, PAD = 24, GAP = 16;
+constexpr int TOUCH_SLOP = 12;     // extra invisible hit area around keys, pads and dials (pixels)
 
 void lock();
 void unlock();
