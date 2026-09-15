@@ -47,6 +47,21 @@ void module_label(lv_obj_t *parent, const char *num, const char *name)
     lv_obj_align_to(t, n, LV_ALIGN_OUT_RIGHT_MID, 12, 0);
 }
 
+void grow_on_press(lv_obj_t *obj)
+{
+    // Pressed state: scale to 112% about the centre, animated over 60 ms both ways. The control
+    // keeps its layout slot; only its drawing (and hit area) grows while the finger is down.
+    static lv_style_transition_dsc_t tr;
+    static const lv_style_prop_t props[] = { LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y, (lv_style_prop_t)0 };
+    static bool init = false;
+    if (!init) { lv_style_transition_dsc_init(&tr, props, lv_anim_path_ease_out, 60, 0, nullptr); init = true; }
+    lv_obj_set_style_transform_pivot_x(obj, lv_pct(50), 0);
+    lv_obj_set_style_transform_pivot_y(obj, lv_pct(50), 0);
+    lv_obj_set_style_transform_scale(obj, 287, LV_STATE_PRESSED);   // 256 = 100 %
+    lv_obj_set_style_transition(obj, &tr, LV_STATE_PRESSED);
+    lv_obj_set_style_transition(obj, &tr, 0);
+}
+
 lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, lv_event_cb_t cb, void *ud)
 {
     lv_obj_t *b = lv_button_create(parent);
@@ -61,6 +76,7 @@ lv_obj_t *keycap(lv_obj_t *parent, const char *text, int w, int h, bool accent, 
     lv_obj_t *l = label(b, text, &jbmono_14, accent ? 0xffffff : INK);
     lv_obj_center(l);
     lv_obj_set_ext_click_area(b, TOUCH_SLOP);            // a finger near the key still presses it
+    grow_on_press(b);
     if (cb) lv_obj_add_event_cb(b, cb, LV_EVENT_ALL, ud);
     return b;
 }
@@ -135,6 +151,14 @@ Dial *dial_create(lv_obj_t *parent, int x, int y, int size, const char *caption,
     lv_obj_set_style_bg_opa(d->arc, LV_OPA_TRANSP, LV_PART_KNOB);
     lv_obj_set_style_pad_all(d->arc, 6, LV_PART_KNOB);
     lv_obj_set_ext_click_area(d->arc, TOUCH_SLOP + 8);   // dials are small; catch fingers around the disc too
+    d->disc = disc;
+    grow_on_press(disc);                                 // the disc swells while the finger is on the arc
+    lv_obj_add_event_cb(d->arc, [](lv_event_t *e) {
+        Dial *dd = (Dial *)lv_event_get_user_data(e);
+        lv_event_code_t c = lv_event_get_code(e);
+        if (c == LV_EVENT_PRESSED) lv_obj_add_state(dd->disc, LV_STATE_PRESSED);
+        else if (c == LV_EVENT_RELEASED || c == LV_EVENT_PRESS_LOST) lv_obj_remove_state(dd->disc, LV_STATE_PRESSED);
+    }, LV_EVENT_ALL, d);
     lv_obj_add_event_cb(d->arc, dial_cb, LV_EVENT_ALL, d);
     d->lbl = label(parent, caption, &jbmono_14, MID);
     lv_obj_set_width(d->lbl, size + 20);

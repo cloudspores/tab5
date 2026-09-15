@@ -71,6 +71,7 @@ lv_obj_t *make_pad(lv_obj_t *parent, int x, int y, int w, int h, int degree)
     pad_num[degree] = label(b, "", &jbmono_14, MID); lv_obj_align(pad_num[degree], LV_ALIGN_TOP_LEFT, 0, 0);
     pad_sym[degree] = label(b, "", &familjen_medium_24, INK); lv_obj_align(pad_sym[degree], LV_ALIGN_BOTTOM_LEFT, 0, 0);
     lv_obj_set_ext_click_area(b, 6);                       // pads are large; a small margin is enough
+    grow_on_press(b);
     lv_obj_add_event_cb(b, pad_cb, LV_EVENT_ALL, (void *)(intptr_t)degree);
     return b;
 }
