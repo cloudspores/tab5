@@ -10,12 +10,14 @@
 #include "synth_keys.h"
 #include <cstdio>
 #include <cstring>
+#include "esp_timer.h"
 
 namespace {
 using namespace theme;
 
 lv_obj_t *scr = nullptr;
 lv_obj_t *lbl_name, *lbl_index, *lbl_algo, *lbl_fb, *lbl_status, *lbl_keys_cap, *meter_bars[30];
+char notice_text[40]; int64_t notice_until = 0;      ///< short message shown in the OUT readout instead of the status
 Dial *dials[4], *vol_dial;
 lv_obj_t *out_panel; lv_obj_t *out_keys[synth_ui::MAX_OUTPUTS]; int n_out_keys = 0; int out_selected = -1;
 constexpr int OUT_LIST_Y = 76, OUT_KEY_H = 30, OUT_KEY_W = 250;
@@ -79,17 +81,18 @@ lv_obj_t *init()
     lv_obj_align(lbl_index, LV_ALIGN_TOP_LEFT, 0, 92);
     lv_obj_t *row = lv_obj_create(p);
     lv_obj_remove_style_all(row);
-    lv_obj_set_size(row, 320, 44); lv_obj_align(row, LV_ALIGN_TOP_RIGHT, 0, 26);
+    // The row must be wide enough for every key and must not scroll: a scrollable parent turns
+    // the slightest finger movement into a drag and swallows the key's click.
+    lv_obj_set_size(row, 340, 44); lv_obj_align(row, LV_ALIGN_TOP_RIGHT, 0, 26);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW); lv_obj_set_style_pad_column(row, 8, 0);
     keycap(row, LV_SYMBOL_LEFT, 44, 44, false, key_cb, (void *)KEY_PREV);
     keycap(row, LV_SYMBOL_RIGHT, 44, 44, false, key_cb, (void *)KEY_NEXT);
     keycap(row, "RANDOM", 84, 44, true, key_cb, (void *)KEY_RANDOM);
     keycap(row, "PANIC", 56, 44, false, key_cb, (void *)KEY_PANIC);
     keycap(row, "PLAY " LV_SYMBOL_RIGHT, 68, 44, false, key_cb, (void *)KEY_PLAY);
-    for (lv_obj_t *k = lv_obj_get_child(row, 0); k; k = nullptr) {
-        lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 0), 0), &lv_font_montserrat_14, 0);
-        lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 1), 0), &lv_font_montserrat_14, 0);
-    }
+    lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 0), 0), &lv_font_montserrat_14, 0);   // arrow glyphs
+    lv_obj_set_style_text_font(lv_obj_get_child(lv_obj_get_child(row, 1), 0), &lv_font_montserrat_14, 0);
     static const char *names[4] = {"BRIGHT", "ATTACK", "RELEASE", "MOTION"};
     const int dsize = 96, dy = sound_h - 36 - dsize - 30;
     for (int i = 0; i < 4; i++) dials[i] = dial_create(p, 20 + i * ((left_w - 36 - 40) / 4) + 10, dy, dsize, names[i], 0, 100, dial_cb);
@@ -168,8 +171,15 @@ void set_meter(int peak, int voices, const char *output)
     int lit = peak * 30 / 32767;
     lock();
     for (int i = 0; i < 30; i++) lv_obj_set_style_bg_color(meter_bars[i], lv_color_hex(i < lit ? (i >= 26 ? ORANGE : INK) : LIGHT), 0);
-    lv_label_set_text_fmt(lbl_status, "%s . %d VOICES", output, voices);
+    if (esp_timer_get_time() < notice_until) lv_label_set_text(lbl_status, notice_text);
+    else lv_label_set_text_fmt(lbl_status, "%s . %d VOICES", output, voices);
     unlock();
+}
+
+void notice(const char *text)
+{
+    strlcpy(notice_text, text, sizeof notice_text);
+    notice_until = esp_timer_get_time() + 1500 * 1000;
 }
 
 void set_status(const char *t) { lock(); lv_label_set_text(lbl_status, t); unlock(); }

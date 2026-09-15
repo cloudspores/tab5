@@ -30,6 +30,7 @@ void set_macro(Macro m, int value);
 void set_octave(int base_midi_note);                  // lowest key of the on-screen keyboard
 void set_meter(int peak_0_32767, int voices, const char *output);   // output: "TAB5 HP", "SONOS KITCHEN", ...
 void set_status(const char *text);
+void notice(const char *text);                        // show a message in the OUT readout for 1.5 s (key feedback)
 void set_outputs(const char *const *names, int count, int selected);   // rebuild the output radio buttons
 void set_volume(int percent);
 void highlight(uint32_t sounding_mask);                 // light the keys that sound (bit n = lowest key + n)

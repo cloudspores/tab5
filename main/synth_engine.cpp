@@ -79,7 +79,7 @@ void render_task(void *)
     // The engine leaves headroom for 16 voices, so a single voice sits around -20 dBFS and the
     // speaker sounds weak. A master gain lifts it and a block limiter keeps chords from clipping:
     // the gain drops instantly when a block would exceed the ceiling and recovers over ~0.3 s.
-    constexpr float MASTER_GAIN = 4.0f, CEILING = 30000.0f, RELEASE = 0.02f;
+    constexpr float MASTER_GAIN = 6.0f, CEILING = 30000.0f, RELEASE = 0.02f;
     float lim = 1.0f;
     while (run) {
         unit->GetSamples(BLOCK, mono);

@@ -38,6 +38,7 @@
 #include "esp_heap_caps.h"
 #include "esp_random.h"
 #include "bsp/esp-bsp.h"
+#include "esp_codec_dev.h"
 
 static const char *TAG = "synth_app";
 
@@ -225,11 +226,12 @@ void on_key(synth_ui::Key k)
     case synth_ui::KEY_PREV:   choose_voice(voice_idx - 1); break;
     case synth_ui::KEY_NEXT:   choose_voice(voice_idx + 1); break;
     case synth_ui::KEY_RANDOM: random_voice(); break;
-    case synth_ui::KEY_PANIC:  perf::all_off(); break;
+    case synth_ui::KEY_PANIC:  perf::all_off(); synth_ui::notice("PANIC . ALL SOUND OFF"); break;
     case synth_ui::KEY_PLAY:   show_page(PAGE_PLAY); break;
     case synth_ui::KEY_OCT_DOWN: if (octave_base > 24) set_octave(octave_base - 12); break;
     case synth_ui::KEY_OCT_UP:   if (octave_base < 84) set_octave(octave_base + 12); break;
-    case synth_ui::KEY_FAV: case synth_ui::KEY_EXPERT: break;   // later milestones
+    case synth_ui::KEY_EXPERT: synth_ui::notice("EXPERT EDITOR COMES LATER"); break;
+    case synth_ui::KEY_FAV: break;
     }
 }
 void on_note(int note, bool on) { if (on) perf::key_down(note); else perf::key_up(note); }
@@ -349,6 +351,26 @@ void register_console()
     console::add("relay",  [](const char *a, int) {
         if (!*a || !strcmp(a, "off")) synth_relay::select(synth_relay::LOCAL); else synth_relay::select(a);
         ESP_LOGI(TAG, "output -> %s", synth_relay::current()); }, "relay ROOM|off: send the synth to a Sonos room");
+    console::add("looptest", [](const char *, int) {                       // does sound leave the speaker? record it with the mics
+        static esp_codec_dev_handle_t mic = nullptr;
+        if (!mic) mic = bsp_audio_codec_microphone_init();
+        esp_codec_dev_sample_info_t fs = {};
+        fs.bits_per_sample = 16; fs.channel = 2; fs.channel_mask = ESP_CODEC_DEV_MAKE_CHANNEL_MASK(0) | ESP_CODEC_DEV_MAKE_CHANNEL_MASK(1);
+        fs.sample_rate = synth::SAMPLE_RATE;
+        if (!mic || esp_codec_dev_open(mic, &fs) != 0) { ESP_LOGE(TAG, "mic open failed"); return; }
+        esp_codec_dev_set_in_gain(mic, 24.0f);
+        const int N = 4096; static int16_t buf[N];
+        auto rms = [&](int reads) { double acc = 0; long cnt = 0; for (int r = 0; r < reads; r++) { if (esp_codec_dev_read(mic, buf, sizeof buf) != 0) break; for (int i = 0; i < N; i++) { acc += (double)buf[i] * buf[i]; cnt++; } } return cnt ? sqrt(acc / cnt) : 0.0; };
+        rms(4);                                                      // let the ADC settle
+        double quiet = rms(6);
+        perf::key_down(69);
+        vTaskDelay(pdMS_TO_TICKS(150));
+        double loud = rms(8);
+        perf::key_up(69);
+        esp_codec_dev_close(mic);
+        ESP_LOGI(TAG, "loop test: mic rms quiet %.0f, with a note %.0f (engine peak %d) -> %s", quiet, loud, synth::last_peak(),
+                 loud > quiet * 3 ? "SPEAKER IS SOUNDING" : "NOTHING HEARD BY THE MICS");
+    }, "record the speaker with the microphones while playing a note");
     console::add("svol",   [](const char *, int v) { on_volume(v, true); synth_ui::set_volume(v); }, "svol 0-100: synth volume (local or room)");
     console::add("outputs", [](const char *, int) { for (auto &o : synth_relay::outputs()) ESP_LOGI(TAG, "  %s%s", o.c_str(), o == synth_relay::current() ? "  <- current" : ""); }, "list synth outputs");
     console::add("page",   [](const char *a, int) { show_page(strcmp(a, "play") == 0 ? PAGE_PLAY : PAGE_SOUND); }, "page sound|play: switch the synth page");
